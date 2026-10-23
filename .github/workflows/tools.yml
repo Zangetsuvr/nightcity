@@ -18,14 +18,14 @@ jobs:
     steps:
       - name: Build redscript-cli
         run: |
-          git clone --depth 1 https://github.com/jac3km4/redscript src
+          git clone --depth 1 --branch v0.5.32 https://github.com/jac3km4/redscript src
           cd src
-          cargo build --release -p redscript-cli
+          cargo build --release -p redscript-cli && cp target/release/redscript-cli ../redscript-cli-0.5
       - name: Publish to tools branch
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          mkdir out && cp src/target/release/redscript-cli out/
+          mkdir out && cp redscript-cli-0.5 out/
           cd out
           git init -q -b tools
           git config user.name ci && git config user.email ci@users.noreply.github.com
