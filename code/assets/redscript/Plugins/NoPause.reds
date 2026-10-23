@@ -38,6 +38,8 @@ let m_mpUnpauseAnim: ref<inkAnimProxy>;
 protected cb func OnInitialize() -> Bool {
     let result = wrappedMethod();
     if MpWorldKeepsRunning() {
+        // Opening the pause menu is usually how people leave: save first.
+        MpSaveNow();
         let root = this.GetRootWidget();
         let opacity = root.GetOpacity();
         let hold = new inkAnimTransparency();

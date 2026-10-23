@@ -48,6 +48,12 @@ public native class NetworkWorldSystem extends IGameSystem {
         // as "you're in" but can be read just after it, and a call made before
         // that list is read goes nowhere.
         GameInstance.GetDelaySystem(GetGameInstance()).DelayCallback(new MpRequestCharacterSync(), 1.0, false);
+
+        // Keep the local save current while on the server (Plugins/Saving.reds).
+        let keeper = MpSaveKeeper.Get();
+        if IsDefined(keeper) {
+            keeper.Start();
+        }
     }
 
     public func OnDisconnected(reason: Uint32) -> Void {

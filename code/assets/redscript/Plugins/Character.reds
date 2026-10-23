@@ -77,6 +77,7 @@ public class CharacterClient extends ClientRpc {
         let facing: EulerAngles;
         facing.Yaw = yaw;
         GameInstance.GetTeleportationFacility(game).Teleport(player, new Vector4(x, y, z, 1.0), facing);
+        MpSaveAfter(8.0);
     }
 
     // A brand-new character's starter kit, from the server: "item,quantity,equip"
@@ -95,6 +96,8 @@ public class CharacterClient extends ClientRpc {
         for entry in StrSplit(items, "|") {
             MpGiveKitItem(player, entry, ts, equipment);
         }
+        // Into the save, so the kit is still there next time.
+        MpSaveAfter(5.0);
     }
 
     // Street Cred level and XP from the server, kept for UI to read later.
