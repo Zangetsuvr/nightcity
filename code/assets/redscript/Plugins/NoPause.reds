@@ -26,27 +26,38 @@ public func MpWorldKeepsRunning() -> Bool {
 
 // Lifts the pause a moment after the pause menu opens. Not straight away: the
 // menu only appears once it has read a "you're paused" event a frame later, and
-// unpausing before that leaves no menu at all. Runs on real time (the last
-// argument of DelayCallback), so the paused game can't hold it up.
-public class MpUnpauseBehindMenu extends DelayCallback {
-    public let handler: wref<inkISystemRequestsHandler>;
-
-    public func Call() -> Void {
-        if MpWorldKeepsRunning() && IsDefined(this.handler) {
-            this.handler.UnpauseGame();
-        }
-    }
-}
+// unpausing before that leaves no menu at all.
+//
+// The wait is a short do-nothing animation on the menu itself: menus keep
+// animating while the game is paused, so its end always arrives. (Game-time
+// timers don't run while paused, which is why the first attempt never fired.)
+@addField(PauseMenuBackgroundGameController)
+let m_mpUnpauseAnim: ref<inkAnimProxy>;
 
 @wrapMethod(PauseMenuBackgroundGameController)
 protected cb func OnInitialize() -> Bool {
     let result = wrappedMethod();
     if MpWorldKeepsRunning() {
-        let unpause = new MpUnpauseBehindMenu();
-        unpause.handler = this.GetSystemRequestsHandler();
-        GameInstance.GetDelaySystem(GetGameInstance()).DelayCallback(unpause, 0.25, false);
+        let root = this.GetRootWidget();
+        let opacity = root.GetOpacity();
+        let hold = new inkAnimTransparency();
+        hold.SetStartTransparency(opacity);
+        hold.SetEndTransparency(opacity);
+        hold.SetDuration(0.3);
+        let wait = new inkAnimDef();
+        wait.AddInterpolator(hold);
+        this.m_mpUnpauseAnim = root.PlayAnimation(wait);
+        this.m_mpUnpauseAnim.RegisterToCallback(inkanimEventType.OnFinish, this, n"OnMpUnpauseBehindMenu");
     }
     return result;
+}
+
+@addMethod(PauseMenuBackgroundGameController)
+protected cb func OnMpUnpauseBehindMenu(proxy: ref<inkAnimProxy>) -> Bool {
+    if MpWorldKeepsRunning() {
+        this.GetSystemRequestsHandler().UnpauseGame();
+    }
+    return true;
 }
 
 // ---------------------------------------------------------------- slow motion
