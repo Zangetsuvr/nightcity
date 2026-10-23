@@ -2,41 +2,205 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --smog: #15132B;
+  --overpass: #24213F;
+  --rail: #3A3660;
+  --sodium: #FF9F43;
+  --rose: #F0549B;
+  --rainlight: #9FD8E6;
+  --bone: #EDE6D6;
+  --signage: "Big Shoulders Display", "Barlow", sans-serif;
+}
+
+html, body, #root { height: 100%; }
+
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  background: var(--smog);
+  color: var(--bone);
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
-}
-
-.textContainer {
-  display: block;
-  white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis;
 }
 
-/* width */
-::-webkit-scrollbar {
-  margin-right: 5px;
-  width: 10px;
+/* ---------------------------------------------------------------- window */
+
+.titlebar { -webkit-app-region: drag; user-select: none; }
+.no-drag, .titlebar button { -webkit-app-region: no-drag; }
+
+/* ------------------------------------------------------------ background */
+
+.sky {
+  position: fixed; inset: 0; z-index: 0;
+  background:
+    radial-gradient(120% 60% at 70% 100%, rgba(255, 159, 67, 0.22), transparent 60%),
+    radial-gradient(60% 40% at 15% 85%, rgba(240, 84, 155, 0.10), transparent 70%),
+    linear-gradient(180deg, #0F0D22 0%, var(--smog) 55%, #241B36 100%);
 }
 
-/* Track */
-::-webkit-scrollbar-track {
-  box-shadow: inset 0 0 5px grey;
-  border-radius: 10px;
+.skyline {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 0;
+  width: 100%; height: 48vh;
 }
 
-/* Handle */
-::-webkit-scrollbar-thumb {
-  background: gray;
-  border-radius: 5px;
+.rain {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image: repeating-linear-gradient(
+    104deg, transparent 0 22px, rgba(159, 216, 230, 0.07) 22px 23px, transparent 23px 47px
+  );
+  background-size: 200px 200px;
+  animation: rain 0.9s linear infinite;
+}
+
+@keyframes rain { to { background-position: -40px 200px; } }
+
+/* ----------------------------------------------------------------- stage */
+
+.stage {
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(320px, 400px);
+  gap: 48px;
+  padding: 48px 56px 40px;
+  align-items: start;
+}
+
+@media (max-width: 860px) {
+  .stage { grid-template-columns: 1fr; padding: 32px 24px; gap: 32px; }
+}
+
+.stage-sign { display: flex; flex-direction: column; padding-top: 24px; }
+
+.server-name {
+  font-family: var(--signage);
+  font-weight: 800;
+  font-size: clamp(56px, 9vw, 104px);
+  line-height: 0.86;
+  letter-spacing: -0.01em;
+  margin: 0;
+  max-width: 9ch;
+  color: var(--bone);
+  text-shadow: 0 0 32px rgba(255, 159, 67, 0.25);
+}
+
+.server-facts {
+  margin-top: 20px;
+  display: flex; align-items: center; gap: 10px;
+  font-size: 17px; font-weight: 500;
+}
+
+.live-dot {
+  width: 9px; height: 9px; border-radius: 50%;
+  background: #6BE3A0;
+  box-shadow: 0 0 0 4px rgba(107, 227, 160, 0.15);
+}
+
+.tag {
+  font-size: 13px; padding: 3px 10px;
+  border: 1px solid var(--rail); color: #B4AEC9;
+}
+
+.link {
+  color: var(--rainlight);
+  text-underline-offset: 3px;
+  align-self: flex-start;
+}
+.link:hover { color: var(--bone); }
+
+.stage-permit { position: relative; }
+
+/* ---------------------------------------------------------------- permit */
+
+/* The one loud thing on screen: a city entry permit with a hologram strip. */
+.permit {
+  position: relative;
+  overflow: hidden;
+  padding: 20px 22px 20px 34px;
+  background: linear-gradient(160deg, #2C2850 0%, var(--overpass) 60%);
+  border: 1px solid var(--rail);
+  clip-path: polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 0 100%);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+}
+
+.permit .holo {
+  position: absolute; left: 0; top: 0; bottom: 0; width: 14px;
+  background: linear-gradient(180deg, var(--rose), var(--rainlight), var(--sodium), var(--rose));
+  background-size: 100% 300%;
+  opacity: 0.35;
+}
+.permit.issued .holo { opacity: 0.9; animation: holo 6s ease-in-out infinite alternate; }
+
+@keyframes holo { to { background-position: 0 100%; } }
+
+.permit-head {
+  display: flex; justify-content: space-between;
+  font-size: 13px; color: #B4AEC9;
+  padding-bottom: 12px; margin-bottom: 14px;
+  border-bottom: 1px dashed var(--rail);
+}
+
+.permit-name {
+  font-family: var(--signage);
+  font-weight: 700;
+  font-size: 40px; line-height: 1;
+  margin-bottom: 16px;
+  overflow-wrap: anywhere;
+}
+
+.permit-row {
+  display: grid; grid-template-columns: 96px 1fr; gap: 12px;
+  font-size: 15px; padding: 6px 0;
+}
+.permit-row span:first-child { color: #B4AEC9; }
+
+.permit-foot {
+  margin-top: 20px;
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  font-size: 13px; color: #B4AEC9;
+}
+.permit-foot span { flex: 1 1 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ----------------------------------------------------------------- enter */
+
+.enter {
+  width: 100%;
+  margin-top: 16px;
+  padding: 18px 20px;
+  font-family: var(--signage);
+  font-weight: 800;
+  font-size: 30px;
+  letter-spacing: 0.01em;
+  color: #1B1206;
+  background: var(--sodium);
+  border: 0;
+  cursor: pointer;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%);
+  transition: background-color 120ms ease, transform 120ms ease;
+}
+.enter:hover:not(:disabled) { background: #FFB766; }
+.enter:active:not(:disabled) { transform: translateY(1px); }
+.enter:focus-visible { outline: 2px solid var(--rainlight); outline-offset: 3px; }
+.enter:disabled { cursor: default; background: #6E5A4A; color: #2A2018; }
+
+/* ---------------------------------------------------------- server list */
+
+.server-row {
+  flex: 1;
+  text-align: left;
+  padding: 18px 8px;
+  background: none; border: 0; color: inherit; font: inherit;
+  cursor: pointer;
+}
+.server-row:hover:not(:disabled) { background: rgba(255, 159, 67, 0.06); }
+.server-row:focus-visible { outline: 2px solid var(--rainlight); outline-offset: -2px; }
+.server-row:disabled { opacity: 0.5; cursor: default; }
+
+/* ---------------------------------------------------------------- misc */
+
+::-webkit-scrollbar { width: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--rail); }
+
+@media (prefers-reduced-motion: reduce) {
+  .rain, .permit.issued .holo { animation: none; }
 }

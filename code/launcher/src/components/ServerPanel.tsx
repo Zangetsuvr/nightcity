@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
-import {
-  Alert, Box, Button, Card, CardContent, Chip, CircularProgress, LinearProgress, Stack, Typography
-} from '@mui/material'
+import { Alert, Box, Button, CircularProgress, LinearProgress } from '@mui/material'
+import { ink } from '../theme.ts'
 
 interface SessionInfo {
   discordName: string
@@ -44,15 +43,37 @@ async function call<T> (promise: Promise<Result<T>>): Promise<T> {
 const STEP_TEXT: Record<string, string> = {
   'checking-server': 'Checking the server…',
   'setting-aside': 'Setting your other mods aside…',
-  installing: 'Installing the server modpack…',
+  installing: 'Installing the server\'s mods…',
   checking: 'Checking your files…',
   ready: 'Mods ready.',
-  playing: 'Game running. Have fun in Night City.',
+  playing: 'You\'re in the city. Have fun.',
   restoring: 'Putting your own mods back…',
   done: 'Your own mods are back. See you next time.'
 }
 
-export default function ServerPanel ({ address, gameReady, onBack }: { address: string, gameReady: boolean, onBack: () => void }) {
+function shortPath (p: string) {
+  const parts = p.split(/[\\/]/)
+  const game = parts.findIndex(x => x.toLowerCase() === 'cyberpunk 2077')
+  return game >= 0 ? parts.slice(0, game + 1).join('\\') : p
+}
+
+function timeLeft (expiresUtc: string) {
+  const ms = new Date(expiresUtc).getTime() - Date.now()
+  if (!Number.isFinite(ms) || ms <= 0) return 'expired'
+  const hours = Math.floor(ms / 3600000)
+  const minutes = Math.floor((ms % 3600000) / 60000)
+  return hours > 0 ? `${hours} h ${minutes} min` : `${minutes} min`
+}
+
+interface Props {
+  address: string
+  gamePath: string | null
+  onSelectGame: () => void
+  onBack: () => void
+  canGoBack: boolean
+}
+
+export default function ServerPanel ({ address, gamePath, onSelectGame, onBack, canGoBack }: Props) {
   const [info, setInfo] = useState<ServerInfo | null>(null)
   const [session, setSession] = useState<SessionInfo | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -102,113 +123,128 @@ export default function ServerPanel ({ address, gameReady, onBack }: { address: 
   })
 
   if (!info && !error) {
-    return <Box sx={{ display: 'grid', placeItems: 'center', height: 300 }}><CircularProgress/></Box>
+    return <Box sx={{ display: 'grid', placeItems: 'center', flex: 1 }}><CircularProgress/></Box>
   }
 
   const percent = progress?.total ? Math.round(((progress.done ?? 0) / progress.total) * 100) : undefined
+  const tags = (info?.Tags ?? '').split(',').map(t => t.trim()).filter(Boolean)
+  const playing = busy === 'play'
 
   return (
-    <Stack spacing={2} sx={{ maxWidth: 560, mx: 'auto', mt: 4 }}>
-      <Box>
-        <Button size="small" onClick={onBack} disabled={busy === 'play'}>← All servers</Button>
+    <Box className="stage">
+      {/* Left: the server, set like a sign over the skyline */}
+      <Box className="stage-sign">
+        {canGoBack && (
+          <Button size="small" onClick={onBack} disabled={playing} sx={{ alignSelf: 'flex-start', mb: 2, color: 'text.secondary' }}>
+            Other servers
+          </Button>
+        )}
+        <Box component="h1" className="server-name">{info?.ServerName ?? 'Server'}</Box>
+        {info && (
+          <Box className="server-facts">
+            <span className="live-dot" aria-hidden="true"/>
+            {info.PlayersOnline}{info.MaxPlayers > 0 ? ` of ${info.MaxPlayers}` : ''} in the city now
+          </Box>
+        )}
+        {info?.Description && <Box sx={{ mt: 2, maxWidth: 460, color: 'text.secondary', lineHeight: 1.5 }}>{info.Description}</Box>}
+        {tags.length > 0 && (
+          <Box sx={{ mt: 2, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+            {tags.map(t => <span key={t} className="tag">{t}</span>)}
+          </Box>
+        )}
+        {info?.DiscordInvite && (
+          <Box component="a" href={info.DiscordInvite} target="_blank" rel="noreferrer" className="link" sx={{ mt: 3 }}>
+            Join the server's Discord
+          </Box>
+        )}
       </Box>
-      <Typography variant="h4" fontWeight={700}>{info?.ServerName ?? 'Server'}</Typography>
-      {info?.Description && <Typography color="text.secondary">{info.Description}</Typography>}
-      {info && (
-        <Typography variant="body2" color="text.secondary">
-          {info.PlayersOnline}{info.MaxPlayers > 0 ? ` / ${info.MaxPlayers}` : ''} players online
-          {info.DiscordInvite && (
-            <> · <a href={info.DiscordInvite} target="_blank" rel="noreferrer" style={{ color: 'inherit' }}>Join the Discord</a></>
-          )}
-        </Typography>
-      )}
 
-      {error && (
-        <Alert severity="error" action={<Button color="inherit" size="small" onClick={load}>Retry</Button>}>
-          {error}
-        </Alert>
-      )}
+      {/* Right: your entry permit and the way in */}
+      <Box className="stage-permit">
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }} action={<Button color="inherit" size="small" onClick={() => { void load() }}>Try again</Button>}>
+            {error}
+          </Alert>
+        )}
 
-      {info && !session && (
-        <Card variant="outlined">
-          <CardContent>
-            <Typography gutterBottom>Log in with Discord to join.</Typography>
-            <Button variant="contained" onClick={login} disabled={busy !== null}>
-              {busy === 'login' ? 'Waiting for Discord in your browser…' : 'Log in with Discord'}
-            </Button>
-          </CardContent>
-        </Card>
-      )}
+        <Box className={`permit${session ? ' issued' : ''}`}>
+          <div className="holo" aria-hidden="true"/>
+          <Box className="permit-head">
+            <span>Entry permit</span>
+            <span>{session ? `Valid ${timeLeft(session.expiresUtc)}` : 'Not issued'}</span>
+          </Box>
 
-      {session && (
-        <Card variant="outlined">
-          <CardContent>
-            <Typography variant="body2" color="text.secondary" gutterBottom>
-              Logged in as {session.discordName} on Discord
-            </Typography>
-
-            {session.characters.length > 0
-              ? (
-                <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', my: 1 }}>
-                  {session.characters.map(c => <Chip key={c} label={c}/>)}
-                </Stack>
-                )
-              : (
-                <Typography sx={{ my: 1 }}>
-                  No characters yet. Press Play, start a <b>New Game</b>, and name your character in the
-                  character creator.
-                </Typography>
-                )}
-
-            {session.characters.length > 0 && (
-              <Typography variant="body2" color="text.secondary">
-                Load that character's save to play them
-                {session.characters.length < session.maxCharacters
-                  ? ', or start a New Game to create another.'
-                  : '.'}
-              </Typography>
-            )}
-
-            <Stack direction="row" spacing={1} sx={{ mt: 2 }}>
-              <Button
-                variant="contained"
-                size="large"
-                onClick={play}
-                disabled={busy !== null || !gameReady}
-              >
-                {busy === 'play' ? 'Playing…' : 'Play'}
-              </Button>
-              <Button onClick={logout} disabled={busy !== null}>Log out</Button>
-            </Stack>
-
-            {!gameReady && (
-              <Typography variant="body2" color="warning.main" sx={{ mt: 1 }}>
-                Select your Cyberpunk2077.exe first.
-              </Typography>
-            )}
-
-            {info?.ModpackRequired && (
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-                Play installs the server's modpack ({info.ModpackFiles} files) and sets your other mods
-                aside while you play. They're put back when the game closes.
-              </Typography>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {progress && (
-        <Box>
-          <Typography variant="body2">{STEP_TEXT[progress.step] ?? progress.step}</Typography>
-          {progress.note && <Typography variant="body2" color="text.secondary">{progress.note}</Typography>}
-          {(busy === 'play' && progress.step !== 'playing') && (
-            <LinearProgress variant={percent === undefined ? 'indeterminate' : 'determinate'} value={percent} sx={{ mt: 1 }}/>
-          )}
-          {progress.file && progress.step !== 'playing' && (
-            <Typography variant="caption" color="text.secondary" noWrap display="block">{progress.file}</Typography>
-          )}
+          {session
+            ? (
+              <>
+                <Box className="permit-name">{session.discordName}</Box>
+                <Box className="permit-row">
+                  <span>Characters</span>
+                  <span>{session.characters.length > 0 ? session.characters.join(', ') : 'None yet'}</span>
+                </Box>
+                <Box className="permit-row">
+                  <span>Slots</span>
+                  <span>{session.characters.length} of {session.maxCharacters}</span>
+                </Box>
+              </>
+              )
+            : (
+              <Box sx={{ py: 2, color: 'text.secondary', lineHeight: 1.5 }}>
+                The city checks who you are with Discord. Your Discord name is all it sees.
+              </Box>
+              )}
         </Box>
-      )}
-    </Stack>
+
+        {!session && info && (
+          <button className="enter" onClick={() => { void login() }} disabled={busy !== null}>
+            {busy === 'login' ? 'Finish in your browser…' : 'Get a permit with Discord'}
+          </button>
+        )}
+
+        {session && (
+          <>
+            <button className="enter" onClick={() => { void play() }} disabled={busy !== null || !gamePath}>
+              {playing ? 'In the city' : 'Enter Night City'}
+            </button>
+            {session.characters.length === 0 && !playing && (
+              <Box sx={{ mt: 1.5, fontSize: 14, color: 'text.secondary', lineHeight: 1.5 }}>
+                First time in: start a New Game and name your character in the character creator.
+              </Box>
+            )}
+          </>
+        )}
+
+        {progress && (
+          <Box sx={{ mt: 2 }} aria-live="polite">
+            <Box sx={{ fontSize: 14 }}>{STEP_TEXT[progress.step] ?? progress.step}</Box>
+            {progress.note && <Box sx={{ fontSize: 13, color: 'text.secondary' }}>{progress.note}</Box>}
+            {playing && progress.step !== 'playing' && (
+              <LinearProgress variant={percent === undefined ? 'indeterminate' : 'determinate'} value={percent} sx={{ mt: 1, height: 3 }}/>
+            )}
+            {progress.file && progress.step !== 'playing' && (
+              <Box sx={{ fontSize: 12, color: 'text.secondary', mt: 0.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {progress.file}
+              </Box>
+            )}
+          </Box>
+        )}
+
+        <Box className="permit-foot">
+          {gamePath
+            ? <span title={gamePath}>Game: {shortPath(gamePath)}</span>
+            : <span style={{ color: ink.sodium }}>Show the launcher where Cyberpunk 2077 is installed.</span>}
+          <Button size="small" onClick={onSelectGame} disabled={playing}>{gamePath ? 'Change' : 'Find game'}</Button>
+          {session && <Button size="small" onClick={() => { void logout() }} disabled={busy !== null}>Log out</Button>}
+        </Box>
+
+        {info?.ModpackRequired && session && !playing && (
+          <Box sx={{ mt: 2, fontSize: 13, color: 'text.secondary', lineHeight: 1.5 }}>
+            Entering installs the server's mods ({info.ModpackFiles} files) and sets your own aside.
+            They're put back when the game closes.
+          </Box>
+        )}
+      </Box>
+    </Box>
   )
 }
+

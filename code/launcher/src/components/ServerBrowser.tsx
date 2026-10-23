@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
-import {
-  Alert, Box, Button, Card, CardActionArea, CardContent, Chip, IconButton, Stack, TextField, Tooltip, Typography
-} from '@mui/material'
+import { Alert, Box, Button, IconButton, TextField, Tooltip } from '@mui/material'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
 import RefreshIcon from '@mui/icons-material/Refresh'
 import ServerPanel, { type ServerInfo } from './ServerPanel.tsx'
+import { ink, signage } from '../theme.ts'
 
 interface ServerEntry {
   name: string
@@ -41,7 +40,12 @@ function writeLastServer (address: string | null) {
   } catch {}
 }
 
-export default function ServerBrowser ({ gameReady }: { gameReady: boolean }) {
+interface Props {
+  gamePath: string | null
+  onSelectGame: () => void
+}
+
+export default function ServerBrowser ({ gamePath, onSelectGame }: Props) {
   const [servers, setServers] = useState<ServerEntry[] | null>(null)
   const [status, setStatus] = useState<Record<string, ServerStatus>>({})
   const [selected, setSelected] = useState<string | null>(null)
@@ -113,81 +117,72 @@ export default function ServerBrowser ({ gameReady }: { gameReady: boolean }) {
   }
 
   if (selected) {
-    return <ServerPanel key={selected} address={selected} gameReady={gameReady} onBack={back}/>
+    return (
+      <ServerPanel key={selected} address={selected} gamePath={gamePath} onSelectGame={onSelectGame}
+                   onBack={back} canGoBack={(servers?.length ?? 0) > 1 || servers?.some(s => s.source === 'custom') === true}/>
+    )
   }
 
   return (
-    <Stack spacing={2} sx={{ maxWidth: 720, mx: 'auto', mt: 4 }}>
-      <Stack direction="row" alignItems="center" justifyContent="space-between">
-        <Typography variant="h4" fontWeight={700}>Servers</Typography>
-        <Tooltip title="Refresh">
-          <IconButton onClick={() => { void loadList() }}><RefreshIcon/></IconButton>
+    <Box sx={{ px: 6, py: 5, maxWidth: 820, width: '100%' }}>
+      <Box sx={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', mb: 3 }}>
+        <Box component="h1" sx={{ fontFamily: signage, fontWeight: 800, fontSize: 64, lineHeight: 0.9, m: 0 }}>
+          Pick a server
+        </Box>
+        <Tooltip title="Check again">
+          <IconButton aria-label="Check servers again" onClick={() => { void loadList() }}><RefreshIcon/></IconButton>
         </Tooltip>
-      </Stack>
+      </Box>
 
-      {error && <Alert severity="error" onClose={() => setError(null)}>{error}</Alert>}
+      {error && <Alert severity="error" onClose={() => setError(null)} sx={{ mb: 2 }}>{error}</Alert>}
 
       {servers?.length === 0 && (
-        <Typography color="text.secondary">No servers yet. Add one by its address below.</Typography>
+        <Box sx={{ color: 'text.secondary', mb: 3 }}>No servers in your list yet. Add one by its address below.</Box>
       )}
 
-      {servers?.map(server => {
-        const s = status[server.address]
-        const info = s?.info
-        return (
-          <Card key={server.address} variant="outlined">
-            <Stack direction="row" alignItems="stretch">
-              <CardActionArea onClick={() => open(server.address)} disabled={s !== undefined && !s.online}>
-                <CardContent>
-                  <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 0.5 }}>
-                    <Typography variant="h6">{info?.ServerName ?? server.name}</Typography>
-                    {s === undefined && <Chip size="small" label="Checking…"/>}
-                    {s?.online === false && <Chip size="small" color="error" label="Offline"/>}
-                    {s?.online && (
-                      <Chip size="small" color="success"
-                            label={`${info?.PlayersOnline ?? 0}${info?.MaxPlayers ? ` / ${info.MaxPlayers}` : ''} online`}/>
-                    )}
-                    {s?.ping !== undefined && <Chip size="small" variant="outlined" label={`${s.ping} ms`}/>}
-                  </Stack>
-                  {info?.Description && <Typography variant="body2" color="text.secondary">{info.Description}</Typography>}
-                  {info?.Tags && (
-                    <Stack direction="row" spacing={0.5} sx={{ mt: 1, flexWrap: 'wrap' }}>
-                      {info.Tags.split(',').map(t => t.trim()).filter(Boolean).map(t => <Chip key={t} size="small" variant="outlined" label={t}/>)}
-                    </Stack>
-                  )}
-                </CardContent>
-              </CardActionArea>
-              {server.source === 'custom' && (
-                <Box sx={{ display: 'flex', alignItems: 'center', pr: 1 }}>
-                  <Tooltip title="Remove from your list">
-                    <IconButton onClick={() => { void removeServer(server.address) }}><DeleteOutlineIcon/></IconButton>
-                  </Tooltip>
+      <Box component="ul" sx={{ listStyle: 'none', p: 0, m: 0, borderTop: `1px solid ${ink.rail}` }}>
+        {servers?.map(server => {
+          const s = status[server.address]
+          const info = s?.info
+          const offline = s !== undefined && !s.online
+          return (
+            <Box component="li" key={server.address} sx={{ display: 'flex', alignItems: 'center', borderBottom: `1px solid ${ink.rail}` }}>
+              <Box component="button" className="server-row" onClick={() => open(server.address)} disabled={offline}>
+                <Box sx={{ fontFamily: signage, fontWeight: 700, fontSize: 30, lineHeight: 1 }}>
+                  {info?.ServerName ?? server.name}
                 </Box>
+                <Box sx={{ color: 'text.secondary', fontSize: 14, mt: 0.75 }}>
+                  {s === undefined && 'Checking…'}
+                  {offline && <Box component="span" sx={{ color: ink.danger }}>Not answering right now</Box>}
+                  {s?.online && `${info?.PlayersOnline ?? 0}${info?.MaxPlayers ? ` of ${info.MaxPlayers}` : ''} in the city, ${s.ping ?? '?'} ms`}
+                  {info?.Description ? `. ${info.Description}` : ''}
+                </Box>
+              </Box>
+              {server.source === 'custom' && (
+                <Tooltip title="Remove from your list">
+                  <IconButton aria-label={`Remove ${server.name}`} onClick={() => { void removeServer(server.address) }} sx={{ mr: 1 }}>
+                    <DeleteOutlineIcon/>
+                  </IconButton>
+                </Tooltip>
               )}
-            </Stack>
-          </Card>
-        )
-      })}
+            </Box>
+          )
+        })}
+      </Box>
 
-      <Card variant="outlined">
-        <CardContent>
-          <Typography gutterBottom>Add a server</Typography>
-          <Stack direction="row" spacing={1} alignItems="center">
-            <TextField
-              size="small"
-              label="Server address"
-              placeholder="play.example.com or 1.2.3.4:11778"
-              value={address}
-              onChange={e => setAddress(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter' && address.trim()) void addServer() }}
-              sx={{ m: 0 }}
-            />
-            <Button variant="contained" onClick={() => { void addServer() }} disabled={adding || !address.trim()}>
-              {adding ? 'Checking…' : 'Add'}
-            </Button>
-          </Stack>
-        </CardContent>
-      </Card>
-    </Stack>
+      <Box sx={{ mt: 4, display: 'flex', gap: 1, alignItems: 'center', maxWidth: 520 }}>
+        <TextField
+          fullWidth
+          label="Add a server by address"
+          placeholder="play.example.com or 1.2.3.4:11778"
+          value={address}
+          onChange={e => setAddress(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter' && address.trim()) void addServer() }}
+        />
+        <Button variant="outlined" onClick={() => { void addServer() }} disabled={adding || !address.trim()} sx={{ height: 40 }}>
+          {adding ? 'Checking…' : 'Add'}
+        </Button>
+      </Box>
+    </Box>
   )
 }

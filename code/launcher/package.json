@@ -23,7 +23,9 @@
     "@mui/utils": "^6.1.10",
     "immer": "^10.1.1",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "@fontsource/big-shoulders-display": "^5.1.0",
+    "@fontsource/barlow": "^5.1.0"
   },
   "eslintConfig": {
     "extends": [
