@@ -3,7 +3,7 @@
 # After building the client on Windows (xmake build -y Client), run from the project folder:
 #   powershell -ExecutionPolicy Bypass -File deploy\package-client.ps1
 #
-# Result: modpack\red4ext\plugins\CyberpunkMP\ with CyberpunkMP.dll and its assets.
+# Result: modpack\red4ext\plugins\zzzCyberpunkMP\ with CyberpunkMP.dll and its assets.
 # Add the other required mods (RED4ext, redscript, ArchiveXL, TweakXL, Codeware,
 # Input Loader, ...) to the same modpack folder, then upload it to the server's
 # data/modpack folder.
@@ -22,7 +22,7 @@ if (-not (Test-Path $dll)) {
     throw "CyberpunkMP.dll isn't built yet ($dll). Run:  xmake f -m $Mode -y  then  xmake build -y Client"
 }
 
-$dest = Join-Path $root "$Out\red4ext\plugins\CyberpunkMP"
+$dest = Join-Path $root "$Out\red4ext\plugins\zzzCyberpunkMP"
 if (Test-Path $dest) { Remove-Item -Recurse -Force $dest }
 New-Item -ItemType Directory -Force $dest | Out-Null
 

@@ -118,8 +118,19 @@ namespace AccountSystem
             "r6/cache/inputUserMappings.xml",
         };
 
+        // The multiplayer mod's folder is "zzzCyberpunkMP" so RED4ext loads it after
+        // Input Loader, which it needs. Files it writes while running are ignored.
+        private static readonly string[] RequiredIgnore =
+        {
+            "red4ext/plugins/zzzCyberpunkMP/session.json",
+            "red4ext/plugins/zzzCyberpunkMP/Rpc/**",
+        };
+
         private void AddRequiredEntries()
         {
+            foreach (var pattern in RequiredIgnore)
+                if (!Ignore.Contains(pattern, StringComparer.OrdinalIgnoreCase))
+                    Ignore.Add(pattern);
             foreach (var root in RequiredRoots)
                 if (!ModRoots.Contains(root, StringComparer.OrdinalIgnoreCase))
                     ModRoots.Add(root);
@@ -140,8 +151,8 @@ namespace AccountSystem
             "**/*.sqlite3",
             "bin/x64/plugins/cyber_engine_tweaks/**/*.json",
             "bin/x64/plugins/cyber_engine_tweaks/*.ini",
-            "red4ext/plugins/CyberpunkMP/session.json",
-            "red4ext/plugins/CyberpunkMP/Rpc/**",
+            "red4ext/plugins/zzzCyberpunkMP/session.json",
+            "red4ext/plugins/zzzCyberpunkMP/Rpc/**",
         };
 
         /// <summary>Secret for admin endpoints (X-Admin-Key header). Empty = admin endpoints off.</summary>

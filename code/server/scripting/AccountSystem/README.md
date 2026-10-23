@@ -56,7 +56,7 @@ data/modpack/
   bin/x64/winmm.dll                                   (RED4ext loader)
   bin/x64/plugins/cyber_engine_tweaks/...             (Cyber Engine Tweaks)
   red4ext/RED4ext.dll
-  red4ext/plugins/CyberpunkMP/...                     (the multiplayer mod itself)
+  red4ext/plugins/zzzCyberpunkMP/...                     (the multiplayer mod itself)
   red4ext/plugins/ArchiveXL/..., TweakXL/..., Codeware/...
   r6/scripts/... , r6/tweaks/...                      (redscript and its scripts)
   archive/pc/mod/...                                  (your custom guns, cars, clothes)
@@ -90,7 +90,7 @@ Edit `code/launcher/electron/launcher-config.json` before building:
     { "name": "Night City Roleplay", "address": "play.yourdomain.com:11778" }
   ],
   "serverListUrl": "",
-  "sessionFile": "red4ext/plugins/CyberpunkMP/session.json"
+  "sessionFile": "red4ext/plugins/zzzCyberpunkMP/session.json"
 }
 ```
 
@@ -199,7 +199,7 @@ same fingerprint. Test vector: these five files and hashes
 archive/pc/mod/nightcity_guns.archive                          30cf1c20022cf1959929016d444bf9ff202382c26b01631ec8783c9034bcde98
 bin/x64/plugins/cyber_engine_tweaks/cyber_engine_tweaks.asi    014b813850156c80c54c8b76e3f616b39bf159542e35e63b96a98c2087901269
 bin/x64/winmm.dll                                              d47712cceb4c780603026e6325221c1bcff90679ebc076baa51c71ebe796717c
-red4ext/plugins/CyberpunkMP/CyberpunkMP.dll                    424927bca55fb638adcf96af37a089a50c187e376d38fbaca030345d032f067b
+red4ext/plugins/zzzCyberpunkMP/CyberpunkMP.dll                    424927bca55fb638adcf96af37a089a50c187e376d38fbaca030345d032f067b
 red4ext/RED4ext.dll                                            efe73a3dbe582a99ef4780855e80ac82591a69d39853c16fde173443186ef9a0
 ```
 

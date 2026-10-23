@@ -296,6 +296,6 @@ function loadLauncherConfig (configDir) {
   return {
     servers: config.servers || [],
     serverListUrl: config.serverListUrl || '',
-    sessionFile: config.sessionFile || 'red4ext/plugins/CyberpunkMP/session.json'
+    sessionFile: config.sessionFile || 'red4ext/plugins/zzzCyberpunkMP/session.json'
   }
 }
