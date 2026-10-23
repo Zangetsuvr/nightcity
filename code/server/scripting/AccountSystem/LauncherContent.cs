@@ -82,7 +82,7 @@ namespace AccountSystem
                     var stamp = File.GetLastWriteTimeUtc(_path);
                     if (stamp != _stamp)
                     {
-                        _content = JsonSerializer.Deserialize<LauncherContent>(File.ReadAllText(_path), new JsonSerializerOptions { ReadCommentHandling = JsonCommentHandling.Skip, AllowTrailingCommas = true }) ?? new LauncherContent();
+                        _content = JsonSerializer.Deserialize<LauncherContent>(File.ReadAllText(_path), new JsonSerializerOptions { ReadCommentHandling = JsonCommentHandling.Skip, AllowTrailingCommas = true, PropertyNameCaseInsensitive = true }) ?? new LauncherContent();
                         _content.Links = _content.Links.Where(l => l.Url.StartsWith("https://", StringComparison.OrdinalIgnoreCase)).ToList();
                         _stamp = stamp;
                     }
