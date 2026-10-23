@@ -34,7 +34,8 @@
       "./launcher-config.json",
       "./server-launcher.js",
       "./servers.js",
-      "./presence.js"
+      "./presence.js",
+      "./keybinds.js"
     ],
     "extraResources": [
       "./preload.mjs",
