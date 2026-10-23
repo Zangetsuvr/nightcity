@@ -289,3 +289,20 @@ public func MpUnlockVehicles(records: String) -> Void {
         }
     }
 }
+
+// ------------------------------------------------------------------ the whole map
+
+// Shows every shop, ripperdoc and other place of interest on the map from the
+// start, so nobody has to explore to find them. Uses the game's own
+// "show all points of interest" switch, once per session on the server.
+public class MpRevealMap extends DelayCallback {
+    public func Call() -> Void {
+        if MpWorldKeepsRunning() {
+            GameInstance.GetJournalManager(GetGameInstance()).DebugShowAllPoiMappins();
+        }
+    }
+}
+
+public func MpRevealMapSoon() -> Void {
+    GameInstance.GetDelaySystem(GetGameInstance()).DelayCallback(new MpRevealMap(), 3.0, false);
+}
