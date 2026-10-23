@@ -44,7 +44,10 @@ public native class NetworkWorldSystem extends IGameSystem {
 
         // Get this character's saved balance and progress from the server
         // (and, for a brand-new character, be moved to the start point).
-        CharacterServer.RequestSync();
+        // Not right away: the server's list of calls arrives in the same batch
+        // as "you're in" but can be read just after it, and a call made before
+        // that list is read goes nowhere.
+        GameInstance.GetDelaySystem(GetGameInstance()).DelayCallback(new MpRequestCharacterSync(), 1.0, false);
     }
 
     public func OnDisconnected(reason: Uint32) -> Void {
@@ -84,3 +87,11 @@ public native class NetworkWorldSystem extends IGameSystem {
 
 @addMethod(GameInstance)
 public static native func GetNetworkWorldSystem() -> ref<NetworkWorldSystem>
+public class MpRequestCharacterSync extends DelayCallback {
+    public func Call() -> Void {
+        let world = GameInstance.GetNetworkWorldSystem();
+        if IsDefined(world) && world.IsConnected() {
+            CharacterServer.RequestSync();
+        }
+    }
+}
