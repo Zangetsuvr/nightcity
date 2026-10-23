@@ -2,6 +2,7 @@ module CyberpunkMP.Plugins
 
 import CyberpunkMP.*
 import CyberpunkMP.World.*
+import CyberpunkMP.Ink.*
 
 // The job board's link to the server, and the marker for the contract you're on.
 // The board itself (what you see when you press the job key) is in

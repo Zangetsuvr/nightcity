@@ -24,16 +24,8 @@ public native class JobsServer extends ServerRpc {
 
 public class JobsClient extends ClientRpc {
 
+    // Kept for the server's call when a job starts or ends; the job board
+    // (Plugins/JobBoard.reds) now shows everything, so nothing opens here.
     public func SetActiveJob(job: CName) -> Void {
-        LogChannel(n"DEBUG", s"[JobsClient] SetActiveJob");
-
-        // Set the current active job of the player
-        if (Equals(job, n"Delivery Driver")) {
-            // Enable the delivery UI
-            DeliveryServer.LoadDeliveries();
-        } else if (Equals(job, n"Taxi Driver")) {
-            TaxiServer.LoadJobs();
-        }
-        // Handle "None" here
     }
 }

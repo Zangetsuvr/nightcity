@@ -216,8 +216,7 @@ public class MultiplayerGameController extends inkGameController {
         evt.AddInputHint(CreateInputHint(n"Connect to server", n"UIConnectToServer", true), !this.m_connectedToServer && !this.m_serverListOpen);
         evt.AddInputHint(CreateInputHint(n"Disconnect from server", n"UIDisconnectFromServer", true), this.m_connectedToServer && !this.m_serverListOpen);
         evt.AddInputHint(CreateInputHint(n"Emote", n"UIEmote", true), this.m_connectedToServer && !this.m_emoteSelectorOpen);
-        evt.AddInputHint(CreateInputHint(n"Cancel Job", n"UIShop", true), this.m_connectedToServer && !this.m_deliveryListOpen && this.m_activeDelivery);
-        evt.AddInputHint(CreateInputHint(n"Start Job", n"UIJob", false), this.m_connectedToServer && !this.m_deliveryListOpen && !this.m_activeDelivery);
+        evt.AddInputHint(CreateInputHint(n"Job Board", n"UIJob", false), this.m_connectedToServer && !this.m_deliveryListOpen);
 
         this.m_uiSystem.QueueEvent(evt);
     }
@@ -775,6 +774,36 @@ public class MultiplayerGameController extends inkGameController {
         return true;
     }
 
+// Job Board (Ink/JobBoardUI.reds)
+
+    private final func OpenJobBoard() -> Void {
+        let board = MpJobBoard.Get();
+        if !IsDefined(board) || board.IsOpen() {
+            return;
+        }
+        this.m_uiSystem.PushGameContext(UIGameContext.ModalPopup);
+        this.m_uiSystem.RequestNewVisualState(n"inkModalPopupState");
+        PopupStateUtils.SetBackgroundBlur(this, true);
+        this.m_audioSystem.Play(n"ui_phone_incoming_call_positive");
+        let blackboardSystem: ref<BlackboardSystem> = GameInstance.GetBlackboardSystem(GetGameInstance());
+        let uiBlackboard: ref<IBlackboard> = blackboardSystem.Get(GetAllBlackboardDefs().UIGameData);
+        uiBlackboard.SetBool(GetAllBlackboardDefs().UIGameData.UIMultiplayerContextRequest, true, true);
+        this.EnableServerInput();
+        board.Open(this);
+    }
+
+    public final func OnJobBoardClosed() -> Void {
+        this.DisableServerInput();
+        this.m_audioSystem.Play(n"ui_phone_incoming_call_negative");
+        PopupStateUtils.SetBackgroundBlur(this, false);
+        this.m_uiSystem.PopGameContext(UIGameContext.ModalPopup);
+        this.m_uiSystem.RestorePreviousVisualState(n"inkModalPopupState");
+        let blackboardSystem: ref<BlackboardSystem> = GameInstance.GetBlackboardSystem(GetGameInstance());
+        let uiBlackboard: ref<IBlackboard> = blackboardSystem.Get(GetAllBlackboardDefs().UIGameData);
+        uiBlackboard.SetBool(GetAllBlackboardDefs().UIGameData.UIMultiplayerContextRequest, false, true);
+        this.UpdateInputHints();
+    }
+
 // Delivery List
 
     private final func ShowDeliveryList(show: Bool) -> Void {
@@ -971,6 +1000,14 @@ public class MultiplayerGameController extends inkGameController {
                 };
             }
         } else {
+            let board = MpJobBoard.Get();
+            if IsDefined(board) && board.IsOpen() {
+                if Equals(actionName, n"OpenPauseMenu") {
+                    ListenerActionConsumer.DontSendReleaseEvent(consumer);
+                    return true;
+                }
+                return board.HandleAction(actionName, Equals(actionType, gameinputActionType.BUTTON_PRESSED));
+            }
             if IsDefined(this.m_deliveryListLogicController) {
                 return this.OnDeliveryListAction(action, consumer);
             }
@@ -986,19 +1023,16 @@ public class MultiplayerGameController extends inkGameController {
             } else if Equals(actionName, n"UIEmote") && Equals(actionType, gameinputActionType.BUTTON_RELEASED) && this.m_emoteSelectorOpen {
                 this.ShowEmoteSelector(false);
                 return true;
-            } else if Equals(actionName, n"UIShop") && Equals(actionType, gameinputActionType.BUTTON_HOLD_COMPLETE) && this.m_activeDelivery {
-                DeliveryServer.CancelDelivery();
+            } else if Equals(actionName, n"UIShop") && Equals(actionType, gameinputActionType.BUTTON_HOLD_COMPLETE) {
+                // Hold the job key: drop the contract you're on.
+                JobBoardServer.CancelContract();
                 // this.m_activeDelivery = false;
                 // this.m_player.RegisterInputListener(this, n"UIJob");
                 // this.m_player.UnregisterInputListener(this, n"UIShop");
                 // this.UpdateInputHints();
                 return true;
-            } else if Equals(actionName, n"UIJob") && Equals(actionType, gameinputActionType.BUTTON_PRESSED) && !this.m_deliveryListOpen && !this.m_activeDelivery {
-                if !this.m_activeJob {
-                    this.ShowJobList(true);
-                } else {
-                    DeliveryServer.LoadDeliveries();
-                }
+            } else if Equals(actionName, n"UIJob") && Equals(actionType, gameinputActionType.BUTTON_PRESSED) && !this.m_deliveryListOpen {
+                this.OpenJobBoard();
                 return true;
             } else {
                 // let value = ListenerAction.GetValue(action);
