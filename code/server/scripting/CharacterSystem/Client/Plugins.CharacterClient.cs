@@ -57,5 +57,17 @@ public static class CharacterClient
 		}
 	}
 
+	[ClientRpc(Class = 12420467711440894951, Function = 17942131534606201975)]
+	public static void GiveStarterKit(ulong playerId, string items)
+	{
+		var data = IBuffer.Create();
+		try{
+			data.WriteString(items);
+			CyberpunkSdk.Server.RpcManager.Call(playerId, 12420467711440894951, 17942131534606201975, data);
+		} finally {
+			IBuffer.Release(data);
+		}
+	}
+
 }
 }

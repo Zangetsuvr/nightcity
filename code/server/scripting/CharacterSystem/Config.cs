@@ -15,6 +15,24 @@ namespace CharacterSystem
         public float Yaw { get; set; } = 0f;
     }
 
+    /// <summary>One item in a starter kit.</summary>
+    public class KitItem
+    {
+        /// <summary>The item's record name, e.g. "Items.Preset_Unity_Default".</summary>
+        public string Item { get; set; } = "";
+        public int Quantity { get; set; } = 1;
+        /// <summary>Put it on / in hand straight away (clothes, the sidearm).</summary>
+        public bool Equip { get; set; } = true;
+
+        public KitItem() { }
+        public KitItem(string item, int quantity = 1, bool equip = true)
+        {
+            Item = item;
+            Quantity = quantity;
+            Equip = equip;
+        }
+    }
+
     public class Config
     {
         /// <summary>Money a brand-new character starts with.</summary>
@@ -75,6 +93,43 @@ namespace CharacterSystem
         /// </summary>
         public StartPoint? Start { get; set; } = new();
 
+        /// <summary>
+        /// What a brand-new character is given, by the lifepath picked in the
+        /// character creator (Corpo, Nomad or StreetKid). Given once per character,
+        /// the first time they connect: whatever the clean start left them carrying
+        /// (clothes, weapons, ammo, consumables) is taken away first, so everyone
+        /// starts from the same place. Money comes from StartingBalance, not from here.
+        /// A lifepath left out (or an empty list) gets nothing and keeps what it had.
+        /// </summary>
+        public Dictionary<string, List<KitItem>> StarterKits { get; set; } = new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Corpo"] = new()
+            {
+                new("Items.Q000_Corpo_FormalJacket"),
+                new("Items.Q000_Corpo_FormalPants"),
+                new("Items.Q000_Corpo_FormalShoes"),
+                new("Items.Preset_Lexington_Default"),
+                new("Ammo.HandgunAmmo", 100, false),
+            },
+            ["StreetKid"] = new()
+            {
+                new("Items.Q000_StreetKid_TShirt"),
+                new("Items.Q000_StreetKid_Pants"),
+                new("Items.Q000_StreetKid_Shoes"),
+                new("Items.Preset_Unity_Default"),
+                new("Ammo.HandgunAmmo", 100, false),
+            },
+            ["Nomad"] = new()
+            {
+                new("Items.Q000_Nomad_TShirt"),
+                new("Items.Q000_Nomad_Pants"),
+                new("Items.Q000_Nomad_Boots"),
+                new("Items.Q000_Nomad_Vest"),
+                new("Items.Preset_Nova_Default"),
+                new("Ammo.HandgunAmmo", 100, false),
+            },
+        };
+
         public static Config Load(string serverRoot, Action<string> logError)
         {
             var dir = Path.Combine(serverRoot, "config");
@@ -86,7 +141,14 @@ namespace CharacterSystem
                 {
                     var loaded = JsonSerializer.Deserialize<Config>(File.ReadAllText(path));
                     if (loaded != null)
+                    {
+                        // Lifepath names are matched loosely whatever the file did.
+                        loaded.StarterKits = new(loaded.StarterKits ?? new(), StringComparer.OrdinalIgnoreCase);
+                        // Write it back so settings added in newer versions show up
+                        // in the file with their defaults, ready to edit.
+                        File.WriteAllText(path, JsonSerializer.Serialize(loaded, new JsonSerializerOptions { WriteIndented = true }));
                         return loaded;
+                    }
                 }
 
                 var defaults = new Config();

@@ -40,6 +40,7 @@ namespace CharacterSystem
             {
                 PushBalance = (id, balance) => Cyberpunk.Rpc.Client.Plugins.CharacterClient.SetBalance(id, balance),
                 PushProgress = (id, level, xp, next) => Cyberpunk.Rpc.Client.Plugins.CharacterClient.SetProgress(id, level, xp, next),
+                PushStarterKit = (id, kit) => Cyberpunk.Rpc.Client.Plugins.CharacterClient.GiveStarterKit(id, kit),
                 Notify = (id, message) => Server.PlayerSystem.GetById(id)?.SendChat("SERVER", message),
             };
 
@@ -104,6 +105,12 @@ namespace Cyberpunk.Rpc.Server.Plugins
         public static partial void RequestSync_Impl(ulong playerId)
         {
             CharacterSystem.Plugin.Instance.Characters.RequestedSync(playerId);
+        }
+
+        /// <summary>The player's game says which lifepath the character was made with.</summary>
+        public static partial void ClaimStarterKit_Impl(ulong playerId, int lifepath)
+        {
+            CharacterSystem.Plugin.Instance.Characters.ClaimStarterKit(playerId, lifepath);
         }
 
         /// <summary>

@@ -562,7 +562,10 @@ public class MultiplayerGameController extends inkGameController {
             // this.m_emoteSelectorWidget.RegisterToCallback(n"OnCloseServerList", this, n"OnCloseServerList");
             this.m_emoteSelector = widget.GetController() as EmoteSelector;
             if IsDefined(this.m_emoteSelector) {
-                this.GetSystemRequestsHandler().PauseGame();
+                // On a server the world keeps going (see Plugins/NoPause.reds).
+                if !MpWorldKeepsRunning() {
+                    this.GetSystemRequestsHandler().PauseGame();
+                }
                 this.m_uiSystem.PushGameContext(UIGameContext.ModalPopup);
                 this.m_uiSystem.RequestNewVisualState(n"inkModalPopupState");
                 TimeDilationHelper.SetTimeDilationWithProfile(this.m_player, "radialMenu", true, true);

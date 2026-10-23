@@ -74,11 +74,11 @@ public func MpStartNewGame() -> Void {
 
 // New Game, straight to making your character.
 //
-// From the launcher, the screens before body type answer themselves: always
-// Phantom Liberty's start (which the clean start archive turns into "no
-// prologue, no story"), normal difficulty and Street Kid. Each screen still
-// runs exactly as the game expects, it just isn't shown and picks for the
-// player a moment after it opens.
+// From the launcher, the first two screens answer themselves: always Phantom
+// Liberty's start (which the clean start archive turns into "no prologue, no
+// story") and normal difficulty. Each still runs exactly as the game expects, it
+// just isn't shown and picks for the player a moment after it opens. The lifepath
+// screen is shown: the player's pick decides their starter kit (Character.reds).
 
 public func MpSkipsNewGameChoices() -> Bool {
     let world = GameInstance.GetNetworkWorldSystem();
@@ -90,7 +90,6 @@ public class MpMenuAdvance extends DelayCallback {
     public let mainMenu: wref<SingleplayerMenuGameController>;
     public let expansion: wref<ExpansionNewGame>;
     public let difficulty: wref<DifficultySelectionMenu>;
-    public let lifePath: wref<CharacterCreationBackstorySelectionMenu>;
     public let bodyType: wref<CharacterCreationGenderSelectionMenu>;
 
     public func Call() -> Void {
@@ -102,9 +101,6 @@ public class MpMenuAdvance extends DelayCallback {
         }
         if IsDefined(this.difficulty) {
             this.difficulty.MpChooseDifficulty();
-        }
-        if IsDefined(this.lifePath) {
-            this.lifePath.MpChooseLifePath();
         }
         if IsDefined(this.bodyType) {
             this.bodyType.MpShowPreviews();
@@ -151,26 +147,6 @@ protected cb func OnInitialize() -> Bool {
 public func MpChooseDifficulty() -> Void {
     // gameDifficulty.Easy is the second option on the screen ("Normal").
     GameInstance.GetStatsDataSystem(GetGameInstance()).SetDifficulty(gameDifficulty.Easy);
-    this.NextMenu();
-}
-
-@wrapMethod(CharacterCreationBackstorySelectionMenu)
-protected cb func OnInitialize() -> Bool {
-    let result = wrappedMethod();
-    if MpSkipsNewGameChoices() {
-        this.GetRootWidget().SetVisible(false);
-        let next = new MpMenuAdvance();
-        next.lifePath = this;
-        // The body type previews start loading behind this screen; give them a
-        // moment, as a player reading the lifepaths would.
-        MpAdvanceSoon(next, 1.5);
-    }
-    return result;
-}
-
-@addMethod(CharacterCreationBackstorySelectionMenu)
-public func MpChooseLifePath() -> Void {
-    this.m_characterCustomizationState.SetLifePath(t"LifePaths.StreetKid");
     this.NextMenu();
 }
 

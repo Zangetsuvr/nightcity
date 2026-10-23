@@ -27,6 +27,9 @@ namespace CharacterSystem
         /// <summary>Tell a player's game their level, XP and XP needed for next level.</summary>
         public Action<ulong, int, long, long> PushProgress { get; set; } = (_, _, _, _) => { };
 
+        /// <summary>Give a player's game its starter kit ("item,quantity,equip|...").</summary>
+        public Action<ulong, string> PushStarterKit { get; set; } = (_, _) => { };
+
         /// <summary>Show a player a short message.</summary>
         public Action<ulong, string> Notify { get; set; } = (_, _) => { };
 
@@ -330,6 +333,42 @@ namespace CharacterSystem
 
             if (_store.Modify(key, r => { r.SpawnedBefore = true; return true; }))
                 Cyberpunk.Rpc.Client.Plugins.CharacterClient.Teleport(playerId, start.X, start.Y, start.Z, start.Yaw);
+        }
+
+        /// <summary>
+        /// The game, once connected, says which lifepath this character picked in
+        /// the creator. A character that hasn't had its starter kit yet gets it now;
+        /// after that this does nothing, so a reconnect never hands out a second one.
+        /// </summary>
+        public void ClaimStarterKit(ulong playerId, int lifepath)
+        {
+            var key = KeyOf(playerId);
+            if (key == null || !_security.AllowCall(playerId, "starter-kit", 2))
+                return;
+
+            // The game's own numbering (gamedataLifePath).
+            var name = lifepath switch { 0 => "Corpo", 1 => "Nomad", 2 => "StreetKid", _ => null };
+            if (name == null)
+                return;
+
+            if (_store.Read(key, r => r.StarterKitGranted))
+                return;
+
+            if (!_config.StarterKits.TryGetValue(name, out var kit) || kit.Count == 0)
+            {
+                _store.Modify(key, r => { r.Lifepath = name; r.StarterKitGranted = true; return true; });
+                return;
+            }
+
+            // Marked first: if anything goes wrong after this, the worst case is a
+            // character without a kit (fixable by an admin), never one with two.
+            if (!_store.Modify(key, r => { r.Lifepath = name; r.StarterKitGranted = true; return true; }))
+                return;
+
+            var lines = kit
+                .Where(i => !string.IsNullOrWhiteSpace(i.Item) && i.Quantity > 0)
+                .Select(i => $"{i.Item.Trim()},{i.Quantity},{(i.Equip ? 1 : 0)}");
+            PushStarterKit(playerId, string.Join("|", lines));
         }
 
         /// <summary>Locks or unlocks a character's money (admin).</summary>

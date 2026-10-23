@@ -91,6 +91,13 @@ public class MpRequestCharacterSync extends DelayCallback {
     public func Call() -> Void {
         let world = GameInstance.GetNetworkWorldSystem();
         if IsDefined(world) && world.IsConnected() {
+            // Lifepath first: a new character's starter kit is handed out before
+            // the sync moves them to the start point.
+            let player = GetPlayer(GetGameInstance());
+            if IsDefined(player) {
+                let lifepath = PlayerDevelopmentSystem.GetInstance(player).GetLifePath(player);
+                CharacterServer.ClaimStarterKit(EnumInt(lifepath));
+            }
             CharacterServer.RequestSync();
         }
     }

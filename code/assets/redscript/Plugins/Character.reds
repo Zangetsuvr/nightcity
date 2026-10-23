@@ -14,6 +14,10 @@ public native class CharacterServer extends ServerRpc {
 
     // Tell the server our eddies changed without its say-so (cheat detection).
     public static native func ReportLocalBalance(localBalance: Int64, lastFromServer: Int64) -> Void;
+
+    // Say which lifepath this character was made with. The server hands out that
+    // lifepath's starter kit the first time, and ignores it after that.
+    public static native func ClaimStarterKit(lifepath: Int32) -> Void;
 }
 
 // Holds what the server last told us. Client RPC functions don't run on a
@@ -75,6 +79,47 @@ public class CharacterClient extends ClientRpc {
         GameInstance.GetTeleportationFacility(game).Teleport(player, new Vector4(x, y, z, 1.0), facing);
     }
 
+    // A brand-new character's starter kit, from the server: "item,quantity,equip"
+    // entries separated by "|". What the clean start left the character carrying
+    // goes first, so everyone starts from the same place.
+    public func GiveStarterKit(items: String) -> Void {
+        let game = GetGameInstance();
+        let player = GetPlayer(game);
+        if !IsDefined(player) {
+            return;
+        }
+        MpStripStartingGear(player);
+
+        let ts = GameInstance.GetTransactionSystem(game);
+        let equipment = EquipmentSystem.GetInstance(player);
+        for entry in StrSplit(items, "|") {
+            this.MpGiveKitItem(player, entry, ts, equipment);
+        }
+    }
+
+    private func MpGiveKitItem(player: ref<PlayerPuppet>, entry: String, ts: ref<TransactionSystem>, equipment: ref<EquipmentSystem>) -> Void {
+        let parts = StrSplit(entry, ",");
+        if ArraySize(parts) < 3 {
+            return;
+        }
+        let record = TDBID.Create(parts[0]);
+        let quantity = StringToInt(parts[1]);
+        if !IsDefined(TweakDBInterface.GetItemRecord(record)) || quantity <= 0 {
+            return;
+        }
+        ts.GiveItem(player, ItemID.FromTDBID(record), quantity);
+        if Equals(parts[2], "1") {
+            let data = ts.GetItemDataByTDBID(player, record);
+            if IsDefined(data) && ItemID.IsValid(data.GetID()) {
+                let equip = new EquipRequest();
+                equip.owner = player;
+                equip.itemID = data.GetID();
+                equip.addToInventory = false;
+                equipment.QueueRequest(equip);
+            }
+        }
+    }
+
     // Street Cred level and XP from the server, kept for UI to read later.
     public func SetProgress(level: Int32, xp: Int64, nextLevelXp: Int64) -> Void {
         let state = CharacterState.Get(GetGameInstance());
@@ -85,4 +130,32 @@ public class CharacterClient extends ClientRpc {
         state.xp = xp;
         state.nextLevelXp = nextLevelXp;
     }
+}
+
+// Takes away the clothes, weapons, grenades, ammo and consumables a new character
+// arrives with. Quest items, cyberware, money and the player's fists stay.
+public func MpStripStartingGear(player: ref<PlayerPuppet>) -> Void {
+    let ts = GameInstance.GetTransactionSystem(player.GetGame());
+    let items: array<wref<gameItemData>>;
+    ts.GetItemList(player, items);
+
+    let remove: array<ItemID>;
+    for data in items {
+        if MpIsStartingGear(data) {
+            ArrayPush(remove, data.GetID());
+        }
+    }
+    for id in remove {
+        ts.RemoveItem(player, id, ts.GetItemQuantity(player, id));
+    }
+}
+
+public func MpIsStartingGear(data: wref<gameItemData>) -> Bool {
+    if !IsDefined(data) || data.HasTag(n"Quest") || data.HasTag(n"base_fists") || data.HasTag(n"Currency") {
+        return false;
+    }
+    let category = RPGManager.GetItemCategory(data.GetID());
+    return Equals(data.GetItemType(), gamedataItemType.Con_Ammo)
+        || Equals(category, gamedataItemCategory.Clothing) || Equals(category, gamedataItemCategory.Weapon)
+        || Equals(category, gamedataItemCategory.Gadget) || Equals(category, gamedataItemCategory.Consumable);
 }

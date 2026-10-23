@@ -32,6 +32,12 @@
         /// <summary>Set once the character has been moved to the start point after creation.</summary>
         public bool SpawnedBefore { get; set; }
 
+        /// <summary>Set once the character has been given its lifepath's starter kit.</summary>
+        public bool StarterKitGranted { get; set; }
+
+        /// <summary>Lifepath picked in the character creator (Corpo, Nomad, StreetKid), once known.</summary>
+        public string? Lifepath { get; set; }
+
         public long GetXp(string track) => Xp.TryGetValue(track, out var v) ? v : 0;
     }
 

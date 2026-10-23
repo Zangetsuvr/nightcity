@@ -24,6 +24,17 @@ public static partial class CharacterServer
 
 	public static partial void RequestSync_Impl(ulong playerId);
 
+	[ServerRpc(Class = 13755933945251012755, Function = 1138419788764832634)]
+	public static void ClaimStarterKit(ulong playerId, IBuffer data)
+	{
+		ushort length = 0;
+		var lifepath = data.ReadInt32();
+
+		ClaimStarterKit_Impl(playerId, lifepath);
+	}
+
+	public static partial void ClaimStarterKit_Impl(ulong playerId, int lifepath);
+
 	[ServerRpc(Class = 13755933945251012755, Function = 15842551664134070190)]
 	public static void ReportLocalBalance(ulong playerId, IBuffer data)
 	{
