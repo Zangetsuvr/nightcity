@@ -1,6 +1,9 @@
 {
   "servers": [
-    { "name": "Night City Roleplay", "address": "play.example.com:11778" }
+    {
+      "name": "Night City Roleplay",
+      "address": "40.160.151.157:11778"
+    }
   ],
   "serverListUrl": "",
   "sessionFile": "red4ext/plugins/CyberpunkMP/session.json"

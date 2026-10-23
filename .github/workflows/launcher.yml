@@ -1,0 +1,60 @@
+name: Build launcher
+
+# Builds the Windows launcher installer and pushes it to the "launcher-output"
+# branch, so it can be fetched with plain git.
+
+on:
+  push:
+    branches: [main]
+    paths: ['code/launcher/**', '.github/workflows/launcher.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Test
+        working-directory: code/launcher/electron
+        run: |
+          pnpm install --frozen-lockfile=false
+          pnpm test
+
+      - name: Build
+        shell: pwsh
+        run: |
+          pnpm config set virtual-store-dir-max-length 50
+          Set-Location code/launcher
+          pnpm install --frozen-lockfile=false
+          pnpm run build
+          Set-Location electron
+          pnpm run build:electron
+
+      - name: Publish installer
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $out = Join-Path $env:RUNNER_TEMP "launcher-output"
+          New-Item -ItemType Directory -Force $out | Out-Null
+          Get-ChildItem code/launcher/electron/out -Filter *.exe | Copy-Item -Destination $out
+          "run $env:GITHUB_RUN_ID, commit $env:GITHUB_SHA" | Set-Content (Join-Path $out "STATUS.txt")
+          Set-Location $out
+          git init -q -b launcher-output
+          git config user.name "ci"
+          git config user.email "ci@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Launcher for run $env:GITHUB_RUN_ID"
+          git push -f "https://x-access-token:$env:GH_TOKEN@github.com/$env:GITHUB_REPOSITORY" HEAD:refs/heads/launcher-output
