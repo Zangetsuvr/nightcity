@@ -1,0 +1,44 @@
+name: Check server plugins
+
+# Compiles the C# server plugins (no native server) and pushes the build log
+# to the "server-ci" branch, so changes can be checked before going to the VPS.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['code/server/scripting/**', '.github/workflows/server.yml']
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Build plugins
+        run: |
+          set +e
+          status=0
+          : > build.log
+          for p in CharacterSystem AccountSystem JobSystem EmoteSystem; do
+            echo "=== $p" >> build.log
+            dotnet build "code/server/scripting/$p/$p.csproj" -c Release -nologo -clp:NoSummary >> build.log 2>&1 || status=1
+          done
+          echo "status=$status" >> build.log
+          grep -E "error|warning CS8|=== |status=" build.log | sort -u | head -200 > summary.txt
+          exit 0
+      - name: Publish log
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir out && cp build.log summary.txt out/ && echo "${GITHUB_SHA}" > out/COMMIT.txt
+          cd out
+          git init -q -b server-ci
+          git config user.name ci && git config user.email ci@users.noreply.github.com
+          git add -A && git commit -q -m "server ci ${GITHUB_SHA}"
+          git push -f "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}" HEAD:refs/heads/server-ci
