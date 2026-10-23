@@ -18,6 +18,12 @@ public native class CharacterServer extends ServerRpc {
     // Say which lifepath this character was made with. The server hands out that
     // lifepath's starter kit the first time, and ignores it after that.
     public static native func ClaimStarterKit(lifepath: Int32) -> Void;
+
+    // Move up one cyberware tier (Plugins/Shops.reds).
+    public static native func BuyCyberwareTier() -> Void;
+
+    // Buy a car at the dealership (Plugins/Shops.reds).
+    public static native func BuyVehicle(record: String) -> Void;
 }
 
 // Holds what the server last told us. Client RPC functions don't run on a
@@ -98,6 +104,28 @@ public class CharacterClient extends ClientRpc {
         }
         // Into the save, so the kit is still there next time.
         MpSaveAfter(5.0);
+    }
+
+    // Cyberware tier from the server: capacity, best implant quality (1-5) and
+    // what the next tier costs (0 = at the top).
+    public func SetCyberware(tier: Int32, capacity: Int32, maxQuality: Int32, nextPrice: Int32) -> Void {
+        let cyberware = MpCyberware.Get();
+        if IsDefined(cyberware) {
+            cyberware.Set(tier, capacity, maxQuality, nextPrice);
+        }
+    }
+
+    // Where the dealership is and what it sells.
+    public func ShopData(payload: String) -> Void {
+        let dealership = MpDealership.Get();
+        if IsDefined(dealership) {
+            dealership.Load(payload);
+        }
+    }
+
+    // Cars this character owns ("|"-separated records): into the garage.
+    public func UnlockVehicles(records: String) -> Void {
+        MpUnlockVehicles(records);
     }
 
     // Street Cred level and XP from the server, kept for UI to read later.

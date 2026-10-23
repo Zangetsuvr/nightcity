@@ -3,6 +3,7 @@ module CyberpunkMP.Ink
 // import Codeware.UI.*
 import CyberpunkMP.*
 import CyberpunkMP.World.*
+import CyberpunkMP.Plugins.*
 
 public class ChatController extends inkHUDGameController {
     private let m_messagesRef: inkWidgetRef;
@@ -123,6 +124,12 @@ public class ChatController extends inkHUDGameController {
 
     private final func SendChat() -> Void {
         let textEntered: String = this.m_input.GetText();
+        if Equals(textEntered, "/where") {
+            // Your position, for setting places in the server's config (dealership...).
+            let p = GetPlayer(GetGameInstance()).GetWorldPosition();
+            MpJobMessage("X " + FloatToStringPrec(p.X, 1) + "   Y " + FloatToStringPrec(p.Y, 1) + "   Z " + FloatToStringPrec(p.Z, 1));
+            return;
+        }
         if NotEquals(textEntered, "") {
             FTLog(s"[ChatController] SendChat \"\(textEntered)\"");
 

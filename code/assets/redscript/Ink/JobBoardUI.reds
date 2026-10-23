@@ -129,6 +129,7 @@ public class MpJobBoard extends ScriptableSystem {
     private let m_contracts: array<ref<MpContractEntry>>;
     private let m_contractsJob: String;
     private let m_contractSelected: Int32;
+    private let m_carSelected: Int32;
 
     public static func Get() -> ref<MpJobBoard> {
         return GameInstance.GetScriptableSystemsContainer(GetGameInstance()).Get(n"CyberpunkMP.Ink.MpJobBoard") as MpJobBoard;
@@ -145,6 +146,14 @@ public class MpJobBoard extends ScriptableSystem {
         this.m_focus = 0;
         this.m_action = 0;
         this.m_loading = true;
+        let dealership = MpDealership.Get();
+        if IsDefined(dealership) && dealership.IsNear(GetPlayer(GetGameInstance())) && ArraySize(dealership.m_cars) > 0 {
+            this.m_mode = 2;
+            this.m_loading = false;
+            this.m_carSelected = 0;
+            this.Redraw();
+            return;
+        }
         this.Redraw();
         JobBoardServer.OpenBoard();
     }
@@ -271,6 +280,9 @@ public class MpJobBoard extends ScriptableSystem {
             this.Close();
             return true;
         }
+        if this.m_mode == 2 {
+            return this.HandleDealership(name);
+        }
         if Equals(name, n"cancel") {
             if this.m_mode == 1 {
                 this.m_loading = true;
@@ -350,6 +362,36 @@ public class MpJobBoard extends ScriptableSystem {
                 this.Run(actions[this.m_action]);
                 return true;
             }
+        }
+        this.Redraw();
+        return true;
+    }
+
+    private func HandleDealership(name: CName) -> Bool {
+        let dealership = MpDealership.Get();
+        let count = IsDefined(dealership) ? ArraySize(dealership.m_cars) : 0;
+        if Equals(name, n"cancel") {
+            this.Close();
+            return true;
+        }
+        if (Equals(name, n"popup_moveUp") || Equals(name, n"popup_moveUp_left_stick_up")) && count > 0 {
+            this.m_carSelected = (this.m_carSelected + count - 1) % count;
+        }
+        if (Equals(name, n"popup_moveDown") || Equals(name, n"popup_moveUp_left_stick_down")) && count > 0 {
+            this.m_carSelected = (this.m_carSelected + 1) % count;
+        }
+        if Equals(name, n"popup_moveLeft") || Equals(name, n"popup_prior") {
+            // Over to the job board.
+            this.m_mode = 0;
+            this.m_loading = true;
+            this.Redraw();
+            JobBoardServer.OpenBoard();
+            return true;
+        }
+        if Equals(name, n"proceed") && count > 0 {
+            CharacterServer.BuyVehicle(dealership.m_cars[this.m_carSelected].record);
+            this.Close();
+            return true;
         }
         this.Redraw();
         return true;
@@ -476,6 +518,10 @@ public class MpJobBoard extends ScriptableSystem {
         MpJbRect(c, x, y, 3.0, h, MpJbRedDim(), 1.0);
         MpJbRect(c, x + w - 40.0, y + 3.0, 40.0, 6.0, MpJbGold(), 1.0);
 
+        if this.m_mode == 2 {
+            this.DrawDealership(c, x, y, w, h);
+            return;
+        }
         MpJbText(c, x + 40.0, y + 28.0, "JOB BOARD", 54, n"Bold", MpJbRed());
         let status = StrLen(this.m_onDuty) > 0 ? "ON DUTY: " + StrUpper(this.DutyName()) : "OFF DUTY";
         MpJbText(c, x + 340.0, y + 50.0, status, 26, n"Medium", StrLen(this.m_onDuty) > 0 ? MpJbCyan() : MpJbInkDim());
@@ -498,6 +544,31 @@ public class MpJobBoard extends ScriptableSystem {
             ? "UP / DOWN  choose        ENTER  accept        LEFT / ESC  back to jobs"
             : "UP / DOWN  choose        RIGHT  buttons        ENTER  select        ESC  close";
         MpJbText(c, x + 40.0, y + h - 46.0, hints, 22, n"Medium", MpJbInkFaint());
+    }
+
+    private func DrawDealership(c: ref<inkCanvas>, x: Float, y: Float, w: Float, h: Float) -> Void {
+        let dealership = MpDealership.Get();
+        MpJbText(c, x + 40.0, y + 28.0, StrUpper(dealership.m_name), 54, n"Bold", MpJbRed());
+        MpJbText(c, x + 40.0, y + 92.0, "Bought cars go to your garage: call them from your phone.", 22, n"Regular", MpJbInkDim());
+        MpJbRect(c, x + 40.0, y + 128.0, w - 80.0, 1.0, MpJbRedDim(), 1.0);
+
+        let ly = y + 150.0;
+        let i = 0;
+        let first = Max(0, this.m_carSelected - 9);
+        for car in dealership.m_cars {
+            if i >= first && ly < y + h - 90.0 {
+                let selected = i == this.m_carSelected;
+                if selected {
+                    MpJbRect(c, x + 30.0, ly - 4.0, w - 60.0, 54.0, MpJbRed(), 0.22);
+                    MpJbRect(c, x + 30.0, ly - 4.0, 4.0, 54.0, MpJbRed(), 1.0);
+                }
+                MpJbText(c, x + 50.0, ly + 4.0, StrUpper(car.name), 30, n"Bold", selected ? MpJbInk() : MpJbInkDim());
+                MpJbText(c, x + 1040.0, ly + 6.0, IntToString(car.price) + " EDDIES", 28, n"Bold", MpJbGold());
+                ly += 60.0;
+            }
+            i += 1;
+        }
+        MpJbText(c, x + 40.0, y + h - 46.0, "UP / DOWN  choose        ENTER  buy        LEFT  job board        ESC  close", 22, n"Medium", MpJbInkFaint());
     }
 
     private func DutyName() -> String {
