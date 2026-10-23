@@ -34,34 +34,91 @@ protected cb func OnSavesForLoadReady(saves: array<String>) -> Bool {
 
 // New Game, straight to making your character.
 //
-// From the launcher, New Game skips the start choice, difficulty and lifepath
-// screens: it's always Phantom Liberty's start (which the clean start archive
-// turns into "no prologue, no story"), normal difficulty and Street Kid. The
-// player goes straight to picking a body type and the character creator.
-@wrapMethod(MenuScenario_SingleplayerMenu)
-protected cb func OnNewGame() -> Bool {
+// From the launcher, the screens before body type answer themselves: always
+// Phantom Liberty's start (which the clean start archive turns into "no
+// prologue, no story"), normal difficulty and Street Kid. Each screen still
+// runs exactly as the game expects, it just isn't shown and picks for the
+// player a moment after it opens.
+
+public func MpSkipsNewGameChoices() -> Bool {
     let world = GameInstance.GetNetworkWorldSystem();
-    let game = GetGameInstance();
-    let ccSystem = GameInstance.GetCharacterCustomizationSystem(game);
-    if !IsDefined(world) || !world.HasServerSession() || !IsDefined(ccSystem)
-        || !this.GetSystemRequestsHandler().IsAdditionalContentEnabled(n"EP1") {
-        return wrappedMethod();
+    return IsDefined(world) && world.HasServerSession();
+}
+
+// Calls back into a menu shortly after it opens, once it's fully set up.
+public class MpMenuAdvance extends DelayCallback {
+    public let expansion: wref<ExpansionNewGame>;
+    public let difficulty: wref<DifficultySelectionMenu>;
+    public let lifePath: wref<CharacterCreationBackstorySelectionMenu>;
+
+    public func Call() -> Void {
+        if IsDefined(this.expansion) {
+            this.expansion.MpChooseStart();
+        }
+        if IsDefined(this.difficulty) {
+            this.difficulty.MpChooseDifficulty();
+        }
+        if IsDefined(this.lifePath) {
+            this.lifePath.MpChooseLifePath();
+        }
     }
+}
 
-    this.CloseSubMenu();
+public func MpAdvanceSoon(callback: ref<MpMenuAdvance>) -> Void {
+    GameInstance.GetDelaySystem(GetGameInstance()).DelayCallback(callback, 0.2, false);
+}
 
-    // What the skipped screens would have set.
-    ccSystem.InitializeState();
-    let state = ccSystem.GetState();
-    state.SetIsExpansionStandalone(true);
-    state.SetLifePath(t"LifePaths.StreetKid");
-    GameInstance.GetStatsDataSystem(game).SetDifficulty(gameDifficulty.Easy);
+@wrapMethod(ExpansionNewGame)
+protected cb func OnInitialize() -> Bool {
+    let result = wrappedMethod();
+    if MpSkipsNewGameChoices() {
+        this.GetRootWidget().SetVisible(false);
+        let next = new MpMenuAdvance();
+        next.expansion = this;
+        MpAdvanceSoon(next);
+    }
+    return result;
+}
 
-    // The lifepath screen normally opens this backdrop and leaves it up for the
-    // body type screen.
-    this.GetMenusState().OpenMenu(n"character_customization_background");
-    this.SwitchToScenario(n"MenuScenario_BodyTypeSelection");
-    return true;
+@addMethod(ExpansionNewGame)
+public func MpChooseStart() -> Void {
+    this.m_characterCustomizationState.SetIsExpansionStandalone(true);
+    this.NextMenu();
+}
+
+@wrapMethod(DifficultySelectionMenu)
+protected cb func OnInitialize() -> Bool {
+    let result = wrappedMethod();
+    if MpSkipsNewGameChoices() {
+        this.GetRootWidget().SetVisible(false);
+        let next = new MpMenuAdvance();
+        next.difficulty = this;
+        MpAdvanceSoon(next);
+    }
+    return result;
+}
+
+@addMethod(DifficultySelectionMenu)
+public func MpChooseDifficulty() -> Void {
+    this.SetDifficulty(gameDifficulty.Easy);
+}
+
+@wrapMethod(CharacterCreationBackstorySelectionMenu)
+protected cb func OnInitialize() -> Bool {
+    let result = wrappedMethod();
+    if MpSkipsNewGameChoices() {
+        this.GetRootWidget().SetVisible(false);
+        let next = new MpMenuAdvance();
+        next.lifePath = this;
+        MpAdvanceSoon(next);
+    }
+    return result;
+}
+
+@addMethod(CharacterCreationBackstorySelectionMenu)
+public func MpChooseLifePath() -> Void {
+    this.m_characterCustomizationState.SetLifePath(t"LifePaths.StreetKid");
+    this.NextMenu();
 }
 
 // Connects a few seconds after the player is in the world.
