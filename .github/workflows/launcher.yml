@@ -41,7 +41,6 @@ jobs:
             & $cmd *>&1 | Tee-Object -FilePath $log -Append
             if ($LASTEXITCODE -ne 0) { "===== FAILED: $what (exit $LASTEXITCODE) =====" | Tee-Object -FilePath $log -Append; exit 1 }
           }
-          Run "pnpm config" { pnpm config set virtual-store-dir-max-length 50 }
           Set-Location code/launcher
           Run "install (ui)" { pnpm install --frozen-lockfile=false }
           Run "build (ui)" { pnpm run build }
