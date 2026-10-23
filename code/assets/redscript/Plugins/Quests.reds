@@ -51,15 +51,15 @@ private final func OnTriggerCall(request: ref<questTriggerCallRequest>) -> Void 
     wrappedMethod(request);
 }
 
-// Phantom Liberty's holocalls (Songbird and the rest) are scenes the quest
-// drives, so blocking the phone can't stop them. They all wait on the game's
-// own "a holocall is being set up" flag; holding it at 1 keeps every one of them
-// from starting. Set when connecting; written into the save on purpose, so a
-// story call isn't left armed for this character later.
+// An earlier version held the game's "a holocall is being set up" fact at 1 to
+// keep Phantom Liberty's holocalls from starting. The game also refuses every
+// conversation while that's set, so no vendor, ripperdoc or NPC would talk to
+// you, and it was written into saves. This puts it back to 0 on connecting;
+// story calls are still refused at the phone (above).
 public func MpSilenceStoryHolocalls() -> Void {
     let quests = GameInstance.GetQuestsSystem(GetGameInstance());
-    if IsDefined(quests) {
-        quests.SetFact(n"holo_setup_active", 1);
+    if IsDefined(quests) && quests.GetFact(n"holo_setup_active") != 0 {
+        quests.SetFact(n"holo_setup_active", 0);
     }
 }
 

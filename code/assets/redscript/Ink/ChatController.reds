@@ -130,6 +130,20 @@ public class ChatController extends inkHUDGameController {
             MpJobMessage("X " + FloatToStringPrec(p.X, 1) + "   Y " + FloatToStringPrec(p.Y, 1) + "   Z " + FloatToStringPrec(p.Z, 1));
             return;
         }
+        // Testing aids for the world's quest facts (which doors and shops are open):
+        //   /fact <name>            shows its value
+        //   /setfact <name> <value> sets it (on your own game only)
+        let words = StrSplit(textEntered, " ");
+        if ArraySize(words) == 2 && Equals(words[0], "/fact") {
+            let value = GameInstance.GetQuestsSystem(GetGameInstance()).GetFact(StringToName(words[1]));
+            MpJobMessage(words[1] + " = " + IntToString(value));
+            return;
+        }
+        if ArraySize(words) == 3 && Equals(words[0], "/setfact") {
+            GameInstance.GetQuestsSystem(GetGameInstance()).SetFact(StringToName(words[1]), StringToInt(words[2]));
+            MpJobMessage(words[1] + " set to " + words[2]);
+            return;
+        }
         if NotEquals(textEntered, "") {
             FTLog(s"[ChatController] SendChat \"\(textEntered)\"");
 
