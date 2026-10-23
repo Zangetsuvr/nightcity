@@ -40,7 +40,8 @@ const scenarios = {
   'logged-out': { servers: 1, session: null },
   'logged-in': { servers: 1, session },
   'installing': { servers: 1, session, progress: { step: 'installing', done: 41, total: 94, file: 'red4ext/plugins/ArchiveXL/ArchiveXL.dll' }, busyPlay: true },
-  'server-list': { servers: 3, session: null, noLast: true }
+  'server-list': { servers: 3, session: null, noLast: true },
+  'keybinds': { servers: 1, session, openKeys: true }
 }
 
 const browser = await chromium.launch()
@@ -69,11 +70,27 @@ for (const [name, s] of Object.entries(scenarios)) {
       play: () => { if (s.progress) setTimeout(() => progressCb?.(s.progress), 50); return new Promise(() => {}) },
       addServer: () => ok({ address: 'x' }),
       removeServer: () => ok(true),
+      keybinds: () => ok({
+        actions: [
+          { id: 'chat', label: 'Open chat', defaultKey: 'IK_Semicolon' },
+          { id: 'job', label: 'Job board / dealership', defaultKey: 'IK_Comma' },
+          { id: 'emote', label: 'Emote wheel (hold)', defaultKey: 'IK_Period' },
+          { id: 'connect', label: 'Connect / disconnect (hold)', defaultKey: 'IK_Slash' },
+          { id: 'chatTop', label: 'Chat: scroll up', defaultKey: 'IK_PageUp' },
+          { id: 'chatBottom', label: 'Chat: scroll down', defaultKey: 'IK_PageDown' }
+        ],
+        binds: { chat: 'IK_Semicolon', job: 'IK_F', emote: 'IK_Period', connect: 'IK_Slash', chatTop: 'IK_PageUp', chatBottom: 'IK_PageDown' }
+      }),
+      setKeybinds: (b) => ok(b),
       onProgress (cb) { progressCb = cb; return () => {} }
     }
   }, { s, info })
   await page.goto(base)
   await page.waitForTimeout(600)
+  if (s.openKeys) {
+    await page.click('text=Keys')
+    await page.waitForTimeout(400)
+  }
   if (s.busyPlay) {
     await page.click('button.enter')
     await page.waitForTimeout(300)

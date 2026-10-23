@@ -172,6 +172,8 @@ contextBridge.exposeInMainWorld('mpAPI', {
   logout: (address) => ipcRenderer.invoke('mp:logout', address),
   play: (address) => ipcRenderer.invoke('mp:play', address),
   isPlaying: () => ipcRenderer.invoke('mp:is-playing'),
+  keybinds: () => ipcRenderer.invoke('mp:keybinds'),
+  setKeybinds: (binds) => ipcRenderer.invoke('mp:set-keybinds', binds),
   onProgress: (callback) => {
     const listener = (_event, update) => callback(update)
     ipcRenderer.on('mp:progress', listener)

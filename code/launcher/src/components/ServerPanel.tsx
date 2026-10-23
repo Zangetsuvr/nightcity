@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Alert, Box, Button, CircularProgress, LinearProgress } from '@mui/material'
 import { ink } from '../theme.ts'
+import KeybindsDialog from './KeybindsDialog.tsx'
 
 interface SessionInfo {
   discordName: string
@@ -79,6 +80,7 @@ export default function ServerPanel ({ address, gamePath, onSelectGame, onBack, 
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
   const [progress, setProgress] = useState<Progress | null>(null)
+  const [keysOpen, setKeysOpen] = useState(false)
 
   const load = useCallback(async () => {
     setError(null)
@@ -248,6 +250,7 @@ export default function ServerPanel ({ address, gamePath, onSelectGame, onBack, 
             ? <span title={gamePath}>Game: {shortPath(gamePath)}</span>
             : <span style={{ color: ink.sodium }}>Show the launcher where Cyberpunk 2077 is installed.</span>}
           <Button size="small" onClick={onSelectGame} disabled={playing}>{gamePath ? 'Change' : 'Find game'}</Button>
+          <Button size="small" onClick={() => setKeysOpen(true)}>Keys</Button>
           {session && <Button size="small" onClick={() => { void logout() }} disabled={busy !== null}>Log out</Button>}
         </Box>
 
@@ -258,6 +261,7 @@ export default function ServerPanel ({ address, gamePath, onSelectGame, onBack, 
           </Box>
         )}
       </Box>
+      <KeybindsDialog open={keysOpen} onClose={() => setKeysOpen(false)}/>
     </Box>
   )
 }

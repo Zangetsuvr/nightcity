@@ -13,6 +13,7 @@ import { applyModpack, restore } from './modpack.js'
 import { gameRootFromExe, writeSession, clearSession, launchAndWait, isGameRunning } from './game.js'
 import { parseAddress, apiUrl, resolveHost, loadServerList } from './servers.js'
 import { setPresence } from './presence.js'
+import { ACTIONS, readBinds, saveBinds, applyBinds } from './keybinds.js'
 
 export function registerServerLauncher ({ electron, store, getWindow, configDir }) {
   const config = loadLauncherConfig(configDir)
@@ -175,6 +176,10 @@ export function registerServerLauncher ({ electron, store, getWindow, configDir 
       characters
     })
 
+    // The player's own keys for chat, emotes and the job board, written into
+    // the input file now that the modpack check is done (keybinds.js).
+    await applyBinds(gameRoot, readBinds(store)).catch(() => {})
+
     playing = { key, info, startedAt: new Date() }
     progress({ step: 'playing' })
     void presenceLoop(key)
@@ -286,6 +291,8 @@ export function registerServerLauncher ({ electron, store, getWindow, configDir 
   })
 
   handle('mp:play', play)
+  handle('mp:keybinds', async () => ({ actions: ACTIONS.map(({ id, label, key }) => ({ id, label, defaultKey: key })), binds: readBinds(store) }))
+  handle('mp:set-keybinds', async (binds) => saveBinds(store, binds))
   handle('mp:is-playing', async () => playing !== null)
 
   return {
