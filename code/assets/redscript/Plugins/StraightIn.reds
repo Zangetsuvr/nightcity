@@ -25,7 +25,13 @@ protected cb func OnSavesForLoadReady(saves: array<String>) -> Bool {
     }
 
     if world.GetAccountCharacterCount() > 0 && ArraySize(saves) > 0 {
-        this.GetSystemRequestsHandler().LoadLastCheckpoint(false);
+        // Load the newest save, but only once the game has checked it can: a
+        // save from another game version reads as damaged. That check arrives
+        // in OnSaveMetadataReady below; if it never does, make a character.
+        this.m_mpWaitingForSave = true;
+        let fallback = new MpMenuAdvance();
+        fallback.mainMenu = this;
+        MpAdvanceSoon(fallback, 4.0);
     } else {
         // Give the menu a moment to finish setting up, as a player would.
         let next = new MpMenuAdvance();
@@ -35,8 +41,34 @@ protected cb func OnSavesForLoadReady(saves: array<String>) -> Bool {
     return result;
 }
 
+@addField(SingleplayerMenuGameController)
+let m_mpWaitingForSave: Bool;
+
+@addField(SingleplayerMenuGameController)
+let m_mpStarted: Bool;
+
+@wrapMethod(SingleplayerMenuGameController)
+protected cb func OnSaveMetadataReady(info: ref<SaveMetadataInfo>) -> Bool {
+    let result = wrappedMethod(info);
+    if this.m_mpWaitingForSave && info.saveIndex == 0 {
+        this.m_mpWaitingForSave = false;
+        if info.isValid {
+            this.m_mpStarted = true;
+            this.GetSystemRequestsHandler().LoadLastCheckpoint(false);
+        } else {
+            this.MpStartNewGame();
+        }
+    }
+    return result;
+}
+
 @addMethod(SingleplayerMenuGameController)
 public func MpStartNewGame() -> Void {
+    if this.m_mpStarted {
+        return;
+    }
+    this.m_mpStarted = true;
+    this.m_mpWaitingForSave = false;
     this.m_menuEventDispatcher.SpawnEvent(n"OnNewGame");
 }
 
