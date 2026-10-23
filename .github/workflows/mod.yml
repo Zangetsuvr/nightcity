@@ -35,9 +35,9 @@ jobs:
       - name: Setup xmake
         uses: xmake-io/github-action-setup-xmake@v1
         with:
-          xmake-version: 2.9.6
+          xmake-version: 3.1.2
           actions-cache-folder: '.xmake-cache'
-          actions-cache-key: ${{ runner.os }}-xmake-cache-2.9.6
+          actions-cache-key: ${{ runner.os }}-xmake-cache-3.1.2
 
       - name: Configure, build and package
         shell: pwsh
