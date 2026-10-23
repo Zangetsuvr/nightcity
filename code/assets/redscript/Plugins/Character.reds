@@ -43,6 +43,7 @@ public class CharacterState extends ScriptableSystem {
 public class CharacterClient extends ClientRpc {
     // Make the eddies in the player's inventory match the server's balance.
     public func SetBalance(balance: Int64) -> Void {
+        MpTrace("SetBalance");
         let game = GetGameInstance();
         let player = GetPlayer(game);
         let state = CharacterState.Get(game);
@@ -75,6 +76,7 @@ public class CharacterClient extends ClientRpc {
     // Move the player (the server does this once for a brand-new character,
     // out of the clean start's holding room to the server's start point).
     public func Teleport(x: Float, y: Float, z: Float, yaw: Float) -> Void {
+        MpTrace("Teleport");
         let game = GetGameInstance();
         let player = GetPlayer(game);
         if !IsDefined(player) {
@@ -90,6 +92,7 @@ public class CharacterClient extends ClientRpc {
     // entries separated by "|". What the clean start left the character carrying
     // goes first, so everyone starts from the same place.
     public func GiveStarterKit(items: String) -> Void {
+        MpTrace("GiveStarterKit");
         let game = GetGameInstance();
         let player = GetPlayer(game);
         if !IsDefined(player) {
@@ -109,6 +112,7 @@ public class CharacterClient extends ClientRpc {
     // Cyberware tier from the server: capacity, best implant quality (1-5) and
     // what the next tier costs (0 = at the top).
     public func SetCyberware(tier: Int32, capacity: Int32, maxQuality: Int32, nextPrice: Int32) -> Void {
+        MpTrace("SetCyberware");
         let cyberware = MpCyberware.Get();
         if IsDefined(cyberware) {
             cyberware.Set(tier, capacity, maxQuality, nextPrice);
@@ -117,6 +121,7 @@ public class CharacterClient extends ClientRpc {
 
     // Where the dealership is and what it sells.
     public func ShopData(payload: String) -> Void {
+        MpTrace("ShopData");
         let dealership = MpDealership.Get();
         if IsDefined(dealership) {
             dealership.Load(payload);
@@ -125,11 +130,13 @@ public class CharacterClient extends ClientRpc {
 
     // Cars this character owns ("|"-separated records): into the garage.
     public func UnlockVehicles(records: String) -> Void {
+        MpTrace("UnlockVehicles");
         MpUnlockVehicles(records);
     }
 
     // Street Cred level and XP from the server, kept for UI to read later.
     public func SetProgress(level: Int32, xp: Int64, nextLevelXp: Int64) -> Void {
+        MpTrace("SetProgress");
         let state = CharacterState.Get(GetGameInstance());
         if !IsDefined(state) {
             return;

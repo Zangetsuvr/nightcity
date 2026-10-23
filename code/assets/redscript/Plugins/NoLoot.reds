@@ -1,5 +1,7 @@
 module CyberpunkMP.Plugins
 
+import CyberpunkMP.World.*
+
 // No free loot while connected: everything you own is bought, earned from a
 // job, or given by the server. Containers, dropped items, loot bags and bodies
 // come up empty, and their "take" prompts are hidden.
@@ -13,7 +15,23 @@ public func MpEmptyLoot(target: ref<GameObject>, activator: ref<GameObject>) -> 
     if !MpNoLoot() || !IsDefined(target) || !IsDefined(activator) || !activator.IsPlayer() {
         return;
     }
-    GameInstance.GetTransactionSystem(target.GetGame()).RemoveAllItems(target);
+    // A moment later, not inside the game's own handler: emptying an item on
+    // the ground removes it from the world, which mustn't happen mid-callback.
+    let later = new MpEmptyLootLater();
+    later.target = target;
+    GameInstance.GetDelaySystem(target.GetGame()).DelayCallback(later, 0.1, false);
+}
+
+public class MpEmptyLootLater extends DelayCallback {
+    public let target: wref<GameObject>;
+
+    public func Call() -> Void {
+        let target = this.target;
+        if IsDefined(target) && MpNoLoot() {
+            MpTrace("emptying loot");
+            GameInstance.GetTransactionSystem(target.GetGame()).RemoveAllItems(target);
+        }
+    }
 }
 
 // Every "take/loot/eat/read" prompt on anything's inventory (bodies included).

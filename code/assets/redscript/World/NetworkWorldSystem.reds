@@ -42,14 +42,17 @@ public native class NetworkWorldSystem extends IGameSystem {
         // Story calls stay closed while on the server (see Plugins/Quests.reds).
         MpSilenceStoryHolocalls();
 
-        // Vendors, ripperdocs and the rest of the open world (Plugins/Quests.reds).
-        MpOpenWorld();
-
-        // ...without its quests (Plugins/Quests.reds).
+        // Quests already in the journal go now (Plugins/Quests.reds)...
+        MpTrace("connected: clearing quests");
         let suppressor = MpQuestSuppressor.Get();
         if IsDefined(suppressor) {
             suppressor.Start();
         }
+
+        // ...and the open world (vendors, ripperdocs) is switched on a few
+        // seconds later, once a new character has been moved out of the holding
+        // room and the game has settled (Plugins/Quests.reds).
+        GameInstance.GetDelaySystem(GetGameInstance()).DelayCallback(new MpOpenWorldLater(), 6.0, false);
 
         // Get this character's saved balance and progress from the server
         // (and, for a brand-new character, be moved to the start point).
@@ -114,6 +117,29 @@ public class MpRequestCharacterSync extends DelayCallback {
                 CharacterServer.ClaimStarterKit(EnumInt(lifepath));
             }
             CharacterServer.RequestSync();
+            MpTrace("sync requested");
         }
     }
+}
+
+public class MpOpenWorldLater extends DelayCallback {
+    public func Call() -> Void {
+        let world = GameInstance.GetNetworkWorldSystem();
+        if !IsDefined(world) || !world.IsConnected() {
+            return;
+        }
+        MpTrace("opening the world");
+        MpOpenWorld();
+        let suppressor = MpQuestSuppressor.Get();
+        if IsDefined(suppressor) {
+            suppressor.Start();
+        }
+        MpTrace("world open");
+    }
+}
+
+// A line in red4ext/plugins/zzzCyberpunkMP/CyberpunkMP.log, to see how far the
+// game got if it ever closes on its own.
+public func MpTrace(message: String) -> Void {
+    LogChannel(n"DEBUG", "[MP] " + message);
 }
