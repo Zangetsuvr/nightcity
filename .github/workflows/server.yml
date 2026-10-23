@@ -25,12 +25,18 @@ jobs:
           set +e
           status=0
           : > build.log
+          S=code/server/scripting
+          echo "=== codegen" >> build.log
+          dotnet build $S/SdkGenerator/SdkGenerator.csproj >> build.log 2>&1 || status=1
+          dotnet run --project $S/SdkGenerator/SdkGenerator.csproj -- $(ls code/server/native/Scripting/I*.h) >> build.log 2>&1 || status=1
+          echo "=== sdk" >> build.log
+          dotnet build $S/CyberpunkSdk/CyberpunkSdk.csproj -c Release -nologo >> build.log 2>&1 || status=1
           for p in CharacterSystem AccountSystem JobSystem EmoteSystem; do
             echo "=== $p" >> build.log
-            dotnet build "code/server/scripting/$p/$p.csproj" -c Release -nologo -clp:NoSummary >> build.log 2>&1 || status=1
+            dotnet build "$S/$p/$p.csproj" -c Release -nologo >> build.log 2>&1 || status=1
           done
           echo "status=$status" >> build.log
-          grep -E "error|warning CS8|=== |status=" build.log | sort -u | head -200 > summary.txt
+          grep -E "error|=== |status=" build.log | sort -u | head -200 > summary.txt
           exit 0
       - name: Publish log
         env:

@@ -40,9 +40,17 @@ namespace JobSystem
 
             Server.World.UpdateEvent += Update;
 
-            RegisterJob<DeliveryDriver>();
-            RegisterJob<Police>();
             RegisterJob<Taxi>();
+
+            // Contract jobs from the job board catalog (courier, tow, mechanic, ...).
+            foreach (var def in Board.JobCatalog.Jobs)
+            {
+                if (def.Tiers.Length == 0)
+                    continue;
+                var captured = def;
+                availableJobs[new CName(def.Name)] = (ulong id) => new Board.ContractJob(id, captured);
+                logger.Info("\tRegistered job " + def.Name);
+            }
 
             Server.Timer.Add(Save, 300.0f);
             Server.Timer.Add(HeavyUpdate, 0.5f);
@@ -98,6 +106,11 @@ namespace JobSystem
 
         public void Quit(ulong id)
         {
+            if (playerJobs.TryGetValue(id, out var working) && working is Board.ContractJob contractJob && contractJob.Active != null)
+                contractJob.Cancel("You went off duty; contract cancelled.");
+            else if (working is Taxi workingTaxi)
+                workingTaxi.CancelJob();
+
             if(playerJobs.Remove(id, out var job))
             {
                 logger.Info($"Player {id} quit job {job.Name}.");
@@ -119,6 +132,7 @@ namespace JobSystem
         private void HeavyUpdate(float delta)
         {
             RestoreSavedJobs(delta);
+            Board.JobBoard.Tick(delta);
 
             foreach (var job in playerJobs.Values)
             {
@@ -153,7 +167,8 @@ namespace JobSystem
                 if (string.IsNullOrEmpty(saved) || playerJobs.ContainsKey(id))
                     continue;
 
-                var name = new CName(saved);
+                var savedDef = Board.JobCatalog.FindSaved(saved);
+                var name = new CName(savedDef?.Name ?? saved);
                 if (!availableJobs.ContainsKey(name))
                 {
                     logger.Warn($"Player {id} had saved job '{saved}', which no longer exists.");
@@ -181,6 +196,8 @@ namespace JobSystem
                         delivery.CancelJob();
                     else if (job is Taxi taxi)
                         taxi.CancelJob();
+                    else if (job is Board.ContractJob contractJob && contractJob.Active is { IsPlayerCall: true } call)
+                        Board.JobBoard.Requeue(call);
                 }
                 catch (Exception ex)
                 {
