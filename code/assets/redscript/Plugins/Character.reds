@@ -70,7 +70,9 @@ public class CharacterClient extends ClientRpc {
         if !IsDefined(player) {
             return;
         }
-        GameInstance.GetTeleportationFacility(game).Teleport(player, new Vector4(x, y, z, 1.0), new EulerAngles(0.0, 0.0, yaw));
+        let facing: EulerAngles;
+        facing.Yaw = yaw;
+        GameInstance.GetTeleportationFacility(game).Teleport(player, new Vector4(x, y, z, 1.0), facing);
     }
 
     // Street Cred level and XP from the server, kept for UI to read later.

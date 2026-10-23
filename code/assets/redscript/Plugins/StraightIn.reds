@@ -32,6 +32,38 @@ protected cb func OnSavesForLoadReady(saves: array<String>) -> Bool {
     return result;
 }
 
+// New Game, straight to making your character.
+//
+// From the launcher, New Game skips the start choice, difficulty and lifepath
+// screens: it's always Phantom Liberty's start (which the clean start archive
+// turns into "no prologue, no story"), normal difficulty and Street Kid. The
+// player goes straight to picking a body type and the character creator.
+@wrapMethod(MenuScenario_SingleplayerMenu)
+protected cb func OnNewGame() -> Bool {
+    let world = GameInstance.GetNetworkWorldSystem();
+    let game = GetGameInstance();
+    let ccSystem = GameInstance.GetCharacterCustomizationSystem(game);
+    if !IsDefined(world) || !world.HasServerSession() || !IsDefined(ccSystem)
+        || !this.GetSystemRequestsHandler().IsAdditionalContentEnabled(n"EP1") {
+        return wrappedMethod();
+    }
+
+    this.CloseSubMenu();
+
+    // What the skipped screens would have set.
+    ccSystem.InitializeState();
+    let state = ccSystem.GetState();
+    state.SetIsExpansionStandalone(true);
+    state.SetLifePath(t"LifePaths.StreetKid");
+    GameInstance.GetStatsDataSystem(game).SetDifficulty(gameDifficulty.Easy);
+
+    // The lifepath screen normally opens this backdrop and leaves it up for the
+    // body type screen.
+    this.GetMenusState().OpenMenu(n"character_customization_background");
+    this.SwitchToScenario(n"MenuScenario_BodyTypeSelection");
+    return true;
+}
+
 // Connects a few seconds after the player is in the world.
 public class MpAutoConnect extends ScriptableSystem {
     private func OnPlayerAttach(request: ref<PlayerAttachRequest>) -> Void {
