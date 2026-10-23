@@ -1,0 +1,33 @@
+name: Build tools
+
+# Builds the redscript command-line tool for Linux (used to read the game's
+# compiled scripts) and pushes it to the "tools" branch.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/tools.yml']
+
+permissions:
+  contents: write
+
+jobs:
+  redscript-cli:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build redscript-cli
+        run: |
+          git clone --depth 1 https://github.com/jac3km4/redscript src
+          cd src
+          cargo build --release -p redscript-cli
+      - name: Publish to tools branch
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir out && cp src/target/release/redscript-cli out/
+          cd out
+          git init -q -b tools
+          git config user.name ci && git config user.email ci@users.noreply.github.com
+          git add -A && git commit -q -m "redscript-cli"
+          git push -f "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}" HEAD:refs/heads/tools

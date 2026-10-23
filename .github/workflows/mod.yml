@@ -1,13 +1,16 @@
 name: Build game mod
 
-# Builds the multiplayer mod (CyberpunkMP.dll + scripts and assets) on Windows
-# and uploads it as the "CyberpunkMP-mod" artifact, laid out like the game
-# folder (red4ext/plugins/CyberpunkMP/...), ready to drop into the modpack.
+# Builds the multiplayer mod (CyberpunkMP.dll + scripts and assets) on Windows.
+# The build log and the packaged mod (red4ext/plugins/CyberpunkMP/...) are
+# pushed to the "ci-output" branch, so they can be fetched with plain git.
 
 on:
   push:
     branches: [main]
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -36,17 +39,34 @@ jobs:
           actions-cache-folder: '.xmake-cache'
           actions-cache-key: ${{ runner.os }}-xmake-cache-2.9.6
 
-      - name: Configure
-        run: xmake config --arch=x64 --mode=release --vs_sdkver=10.0.19041.0 --yes
+      - name: Configure, build and package
+        shell: pwsh
+        run: |
+          $log = "ci-log.txt"
+          function Run($what, [scriptblock]$cmd) {
+            "===== $what =====" | Tee-Object -FilePath $log -Append
+            & $cmd *>&1 | Tee-Object -FilePath $log -Append
+            if ($LASTEXITCODE -ne 0) { "===== FAILED: $what (exit $LASTEXITCODE) =====" | Tee-Object -FilePath $log -Append; exit 1 }
+          }
+          Run "configure" { xmake config --arch=x64 --mode=release --vs_sdkver=10.0.19041.0 --yes -v }
+          Run "build" { xmake build -y -v Client }
+          Run "package" { powershell -ExecutionPolicy Bypass -File deploy\package-client.ps1 }
 
-      - name: Build the mod
-        run: xmake build -y -v Client
-
-      - name: Package
-        run: powershell -ExecutionPolicy Bypass -File deploy\package-client.ps1
-
-      - name: Upload
-        uses: actions/upload-artifact@v4
-        with:
-          name: CyberpunkMP-mod
-          path: modpack/
+      - name: Publish log and mod to ci-output branch
+        if: always()
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $out = Join-Path $env:RUNNER_TEMP "ci-output"
+          New-Item -ItemType Directory -Force $out | Out-Null
+          if (Test-Path ci-log.txt) { Copy-Item ci-log.txt $out }
+          if (Test-Path modpack) { Copy-Item -Recurse modpack (Join-Path $out "modpack") }
+          "run $env:GITHUB_RUN_ID, commit $env:GITHUB_SHA, status ${{ job.status }}" | Set-Content (Join-Path $out "STATUS.txt")
+          Set-Location $out
+          git init -q -b ci-output
+          git config user.name "ci"
+          git config user.email "ci@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Build output for run $env:GITHUB_RUN_ID"
+          git push -f "https://x-access-token:$env:GH_TOKEN@github.com/$env:GITHUB_REPOSITORY" HEAD:refs/heads/ci-output
