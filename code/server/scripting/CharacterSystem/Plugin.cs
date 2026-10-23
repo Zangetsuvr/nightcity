@@ -15,6 +15,7 @@ namespace CharacterSystem
         internal Characters Characters { get; }
         internal Config Config { get; }
         internal Phone Phone { get; }
+        internal MedicalService Medical { get; }
 
         private readonly Logger _logger = new("Character");
 
@@ -50,6 +51,7 @@ namespace CharacterSystem
             };
 
             Phone = new Phone(databaseFile, store);
+            Medical = new MedicalService(Config);
             Server.Timer.Add(_ => Phone.Tick(), 1.0f);
 
             // Other plugins (jobs, shops, loot) reach money and XP through these.

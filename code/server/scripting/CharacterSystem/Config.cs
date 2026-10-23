@@ -82,6 +82,22 @@ namespace CharacterSystem
     }
 
     /// <summary>An extra icon on everyone's map: a gun shop, ripperdoc, clothing store...</summary>
+    public class Hospital
+    {
+        public string Name { get; set; } = "";
+        public float X { get; set; }
+        public float Y { get; set; }
+        public float Z { get; set; }
+    }
+
+    public class Medical
+    {
+        /// <summary>Trauma bill for each flatline. Taken from what you have; never puts you below zero.</summary>
+        public long Bill { get; set; } = 250;
+
+        public List<Hospital> Hospitals { get; set; } = new();
+    }
+
     public class MapMarker
     {
         /// <summary>guns, ripperdoc, clothes, food, bar, meds, tech, junk, netrunner, melee, dropoff, blackmarket, car</summary>
@@ -209,6 +225,14 @@ namespace CharacterSystem
         /// it here with its type.
         /// </summary>
         public List<MapMarker> MapMarkers { get; set; } = new();
+
+        /// <summary>
+        /// Flatlining on the server: instead of the game's death screen (which
+        /// reloads a save and drops you off the server), you wake up at the nearest
+        /// hospital, healed, minus the bill. Stand at a clinic, type /where in chat,
+        /// and add it under Hospitals. With none listed, you wake at Start.
+        /// </summary>
+        public Medical Medical { get; set; } = new();
 
         /// <summary>The car dealership: where it is and what it sells.</summary>
         public Dealership Dealership { get; set; } = new();

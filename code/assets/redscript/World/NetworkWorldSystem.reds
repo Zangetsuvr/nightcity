@@ -61,6 +61,12 @@ public native class NetworkWorldSystem extends IGameSystem {
         // that list is read goes nowhere.
         GameInstance.GetDelaySystem(GetGameInstance()).DelayCallback(new MpRequestCharacterSync(), 1.0, false);
 
+        // No death screen while on the server (Plugins/Flatline.reds).
+        let flatline = MpFlatline.Get();
+        if IsDefined(flatline) {
+            flatline.Arm();
+        }
+
         // Keep the local save current while on the server (Plugins/Saving.reds).
         let keeper = MpSaveKeeper.Get();
         if IsDefined(keeper) {
@@ -76,6 +82,11 @@ public native class NetworkWorldSystem extends IGameSystem {
         let blackboardSystem: ref<BlackboardSystem> = GameInstance.GetBlackboardSystem(GetGameInstance());
         let blackboard: ref<IBlackboard> = blackboardSystem.Get(GetAllBlackboardDefs().UIGameData);
         blackboard.SetBool(GetAllBlackboardDefs().UIGameData.UIMultiplayerConnectedToServer, false, true);
+
+        let flatline = MpFlatline.Get();
+        if IsDefined(flatline) {
+            flatline.Disarm();
+        }
     }
 
     public func CreatePuppet(position: Vector4, rotation: Quaternion, isMale: Bool) -> EntityID {
