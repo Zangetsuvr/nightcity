@@ -45,6 +45,12 @@ public native class NetworkWorldSystem extends IGameSystem {
         // Vendors, ripperdocs and the rest of the open world (Plugins/Quests.reds).
         MpOpenWorld();
 
+        // ...without its quests (Plugins/Quests.reds).
+        let suppressor = MpQuestSuppressor.Get();
+        if IsDefined(suppressor) {
+            suppressor.Start();
+        }
+
         // Get this character's saved balance and progress from the server
         // (and, for a brand-new character, be moved to the start point).
         // Not right away: the server's list of calls arrives in the same batch

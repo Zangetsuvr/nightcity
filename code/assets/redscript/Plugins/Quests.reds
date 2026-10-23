@@ -89,3 +89,51 @@ public func MpOpenWorld() -> Void {
         }
     }
 }
+
+// No quests in your journal on the server.
+//
+// Opening the world also wakes up the base game's story and side quests
+// (Automatic Love, Ghost Town...). They're switched to inactive as soon as
+// they appear, which takes them out of the journal, the on-screen tracker and
+// the map. Their phone calls and texts are already refused. Only while
+// connected; single player keeps its quests.
+public class MpQuestSuppressor extends ScriptableSystem {
+    private let m_listening: Bool;
+
+    public static func Get() -> ref<MpQuestSuppressor> {
+        return GameInstance.GetScriptableSystemsContainer(GetGameInstance()).Get(n"CyberpunkMP.Plugins.MpQuestSuppressor") as MpQuestSuppressor;
+    }
+
+    // Called on connecting: clears what's already there and keeps watching.
+    public func Start() -> Void {
+        let journal = GameInstance.GetJournalManager(this.GetGameInstance());
+        if !IsDefined(journal) {
+            return;
+        }
+        if !this.m_listening {
+            journal.RegisterScriptCallback(this, n"OnMpJournalState", gameJournalListenerType.State);
+            this.m_listening = true;
+        }
+        let context: JournalRequestContext;
+        context.stateFilter.active = true;
+        let quests: array<wref<JournalEntry>>;
+        journal.GetQuests(context, quests);
+        for quest in quests {
+            journal.ChangeEntryStateByHash(Cast<Uint32>(journal.GetEntryHash(quest)), gameJournalEntryState.Inactive, JournalNotifyOption.DoNotNotify);
+        }
+        journal.UntrackEntry();
+    }
+
+    protected cb func OnMpJournalState(entryHash: Uint32, className: CName, notifyOption: JournalNotifyOption, changeType: JournalChangeType) -> Bool {
+        if !Equals(className, n"gameJournalQuest") || !MpQuestsSilenced() {
+            return false;
+        }
+        let journal = GameInstance.GetJournalManager(this.GetGameInstance());
+        let entry = journal.GetEntry(entryHash);
+        if IsDefined(entry) && Equals(journal.GetEntryState(entry), gameJournalEntryState.Active) {
+            journal.ChangeEntryStateByHash(entryHash, gameJournalEntryState.Inactive, JournalNotifyOption.DoNotNotify);
+            journal.UntrackEntry();
+        }
+        return false;
+    }
+}
