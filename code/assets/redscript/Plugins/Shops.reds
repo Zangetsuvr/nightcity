@@ -230,6 +230,8 @@ public class MpDealership extends ScriptableSystem {
     public let m_position: Vector4;
     public let m_known: Bool;
     public let m_cars: array<ref<MpCarOffer>>;
+    // Cars the server listed, including ones this game doesn't have.
+    public let m_offered: Int32;
     // Shop prices from the server's prices.json.
     public let m_priceKnown: Bool;
     public let m_globalMultiplier: Float;
@@ -247,6 +249,7 @@ public class MpDealership extends ScriptableSystem {
 
     public func Load(payload: String) -> Void {
         ArrayClear(this.m_cars);
+        this.m_offered = 0;
         ArrayClear(this.m_categoryNames);
         ArrayClear(this.m_categoryMultipliers);
         ArrayClear(this.m_itemIDs);
@@ -281,6 +284,7 @@ public class MpDealership extends ScriptableSystem {
                     ArrayPush(this.m_markers, MpRegisterMapIcon(MpMarkerVariant(f[1]), position));
                 }
                 if ArraySize(f) >= 4 && Equals(f[0], "V") {
+                    this.m_offered += 1;
                     // Only cars this version of the game actually has.
                     if IsDefined(TweakDBInterface.GetVehicleRecord(TDBID.Create(f[1]))) {
                         let car = new MpCarOffer();
@@ -334,6 +338,17 @@ public class MpDealership extends ScriptableSystem {
             return false;
         }
         return Vector4.Distance(player.GetWorldPosition(), this.m_position) < 12.0;
+    }
+
+    // /dealer in chat: what the game knows about the dealership.
+    public func Describe() -> String {
+        if !this.m_known {
+            return "Dealership: the server hasn't sent it yet (rejoin).";
+        }
+        let player = GetPlayer(this.GetGameInstance());
+        let distance = IsDefined(player) ? Vector4.Distance(player.GetWorldPosition(), this.m_position) : -1.0;
+        return "Dealership at " + FloatToStringPrec(this.m_position.X, 1) + ", " + FloatToStringPrec(this.m_position.Y, 1) + ", " + FloatToStringPrec(this.m_position.Z, 1)
+            + "  |  you're " + FloatToStringPrec(distance, 1) + " m away (needs < 12)  |  cars: " + IntToString(ArraySize(this.m_cars)) + " of " + IntToString(this.m_offered) + " exist in this game";
     }
 }
 

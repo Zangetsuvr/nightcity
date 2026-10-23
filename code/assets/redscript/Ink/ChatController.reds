@@ -168,6 +168,11 @@ public class ChatController extends inkHUDGameController {
             AdminServer.AddPlace(place, here.X, here.Y, here.Z);
             return;
         }
+        if Equals(textEntered, "/dealer") {
+            let dealer = MpDealership.Get();
+            MpJobMessage(IsDefined(dealer) ? dealer.Describe() : "Dealership: not loaded.");
+            return;
+        }
         if Equals(textEntered, "/where") {
             // Your position, for setting places in the server's config (dealership...).
             let p = GetPlayer(GetGameInstance()).GetWorldPosition();
