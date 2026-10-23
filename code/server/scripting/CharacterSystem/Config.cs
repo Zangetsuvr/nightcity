@@ -61,7 +61,7 @@ namespace CharacterSystem
     {
         public string Name { get; set; } = "Night City Motors";
         /// <summary>Where it is. Stand there in game and type /where in chat to get the numbers.</summary>
-        public StartPoint Location { get; set; } = new() { X = -1712.4f, Y = -1956.6f, Z = 62.4f };
+        public StartPoint Location { get; set; } = new() { X = -1729.0f, Y = -1948.1f, Z = 61.4f };
         public List<CarOffer> Cars { get; set; } = new()
         {
             new("Vehicle.v_standard2_archer_hella_player", "Archer Hella", 9000),
