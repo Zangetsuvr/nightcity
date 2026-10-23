@@ -24,13 +24,15 @@ jobs:
           git submodule sync --recursive
           git submodule update --init --force --recursive --depth=1
 
-      - name: Cache xmake packages
-        uses: actions/cache@v4
+      # Restored and saved separately so libraries built in a failed run are
+      # kept for the next one (the build of our own code fails often early on).
+      - name: Restore xmake packages
+        uses: actions/cache/restore@v4
         with:
           path: ~/AppData/Local/.xmake/packages
-          key: ${{ runner.os }}-xmake-packages-${{ hashFiles('**/xmake.lua') }}
+          key: ${{ runner.os }}-xmake-pkgs-${{ hashFiles('**/xmake.lua') }}-${{ github.run_id }}
           restore-keys: |
-            ${{ runner.os }}-xmake-packages-
+            ${{ runner.os }}-xmake-pkgs-${{ hashFiles('**/xmake.lua') }}-
 
       - name: Setup xmake
         uses: xmake-io/github-action-setup-xmake@v1
@@ -51,6 +53,13 @@ jobs:
           Run "configure" { xmake config --arch=x64 --mode=release --vs_sdkver=10.0.19041.0 --yes -v }
           Run "build" { xmake build -y -v Client }
           Run "package" { powershell -ExecutionPolicy Bypass -File deploy\package-client.ps1 }
+
+      - name: Save xmake packages
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: ~/AppData/Local/.xmake/packages
+          key: ${{ runner.os }}-xmake-pkgs-${{ hashFiles('**/xmake.lua') }}-${{ github.run_id }}
 
       - name: Publish log and mod to ci-output branch
         if: always()
