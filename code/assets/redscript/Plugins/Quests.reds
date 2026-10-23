@@ -82,11 +82,19 @@ public func MpOpenWorld() -> Void {
     if !IsDefined(quests) {
         return;
     }
-    let facts: array<CName> = [n"CYB-629334", n"CYB-624820", n"CYB-655031", n"q000_done", n"q101_enable_side_content", n"ep1_side_content"];
+    // The ripperdoc screen also counts as a first-visit tutorial (which can't be
+    // closed until finished) unless these say it's been seen.
+    let facts: array<CName> = [n"CYB-629334", n"CYB-624820", n"CYB-655031", n"q000_done", n"q101_enable_side_content", n"ep1_side_content",
+        n"ep1_ripperdoc_tutorial_seen", n"q001_ripperdoc_done"];
     for fact in facts {
         if quests.GetFact(fact) < 1 {
             quests.SetFact(fact, 1);
         }
+    }
+    // A clean start isn't a Phantom Liberty story start. (It was switched on by
+    // hand while testing; left on, it starts the PL story and its tutorials.)
+    if quests.GetFact(n"ep1_standalone") != 0 {
+        quests.SetFact(n"ep1_standalone", 0);
     }
 }
 
