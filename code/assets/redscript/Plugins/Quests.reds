@@ -118,6 +118,10 @@ public class MpQuestSuppressor extends ScriptableSystem {
         }
     }
 
+    private let m_sweepPending: Bool;
+    private let m_seenQuests: array<Uint32>;
+    private let m_seenCounts: array<Int32>;
+
     // Called on connecting: clears what's already there and keeps watching.
     public func Start() -> Void {
         let journal = GameInstance.GetJournalManager(this.GetGameInstance());
@@ -128,26 +132,65 @@ public class MpQuestSuppressor extends ScriptableSystem {
             journal.RegisterScriptCallback(this, n"OnMpJournalState", gameJournalListenerType.State);
             this.m_listening = true;
         }
+        this.Sweep();
+    }
+
+    // The journal says a quest changed. Never answered on the spot: switching a
+    // quest off inside this callback lets a quest that switches itself straight
+    // back on bounce forever and freeze the game. A sweep a moment later instead.
+    protected cb func OnMpJournalState(entryHash: Uint32, className: CName, notifyOption: JournalNotifyOption, changeType: JournalChangeType) -> Bool {
+        if !Equals(className, n"gameJournalQuest") || !MpQuestsSilenced() || this.m_sweepPending {
+            return false;
+        }
+        this.m_sweepPending = true;
+        GameInstance.GetDelaySystem(this.GetGameInstance()).DelayCallback(new MpQuestSweep(), 1.0, false);
+        return false;
+    }
+
+    public func Sweep() -> Void {
+        this.m_sweepPending = false;
+        if !MpQuestsSilenced() {
+            return;
+        }
+        let journal = GameInstance.GetJournalManager(this.GetGameInstance());
+        if !IsDefined(journal) {
+            return;
+        }
         let context: JournalRequestContext;
         context.stateFilter.active = true;
         let quests: array<wref<JournalEntry>>;
         journal.GetQuests(context, quests);
         for quest in quests {
-            journal.ChangeEntryStateByHash(Cast<Uint32>(journal.GetEntryHash(quest)), gameJournalEntryState.Inactive, JournalNotifyOption.DoNotNotify);
+            let hash = Cast<Uint32>(journal.GetEntryHash(quest));
+            // A quest the story keeps switching back on is left alone after a
+            // few tries (it stays untracked); fighting it is what can freeze.
+            if this.Bump(hash) <= 3 {
+                journal.ChangeEntryStateByHash(hash, gameJournalEntryState.Inactive, JournalNotifyOption.DoNotNotify);
+            }
         }
         journal.UntrackEntry();
     }
 
-    protected cb func OnMpJournalState(entryHash: Uint32, className: CName, notifyOption: JournalNotifyOption, changeType: JournalChangeType) -> Bool {
-        if !Equals(className, n"gameJournalQuest") || !MpQuestsSilenced() {
-            return false;
+    private func Bump(hash: Uint32) -> Int32 {
+        let i = 0;
+        while i < ArraySize(this.m_seenQuests) {
+            if this.m_seenQuests[i] == hash {
+                this.m_seenCounts[i] += 1;
+                return this.m_seenCounts[i];
+            }
+            i += 1;
         }
-        let journal = GameInstance.GetJournalManager(this.GetGameInstance());
-        let entry = journal.GetEntry(entryHash);
-        if IsDefined(entry) && Equals(journal.GetEntryState(entry), gameJournalEntryState.Active) {
-            journal.ChangeEntryStateByHash(entryHash, gameJournalEntryState.Inactive, JournalNotifyOption.DoNotNotify);
-            journal.UntrackEntry();
+        ArrayPush(this.m_seenQuests, hash);
+        ArrayPush(this.m_seenCounts, 1);
+        return 1;
+    }
+}
+
+public class MpQuestSweep extends DelayCallback {
+    public func Call() -> Void {
+        let suppressor = MpQuestSuppressor.Get();
+        if IsDefined(suppressor) {
+            suppressor.Sweep();
         }
-        return false;
     }
 }
