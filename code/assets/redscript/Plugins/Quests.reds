@@ -68,3 +68,24 @@ public func MpQuestsSilenced() -> Bool {
     let network = GameInstance.GetNetworkWorldSystem();
     return IsDefined(network) && network.IsConnected();
 }
+
+// Opens the world on a clean start.
+//
+// The game's start-up quest has a separate entrance for Phantom Liberty starts,
+// which our clean start uses. On that entrance it waits for three internal flags
+// (normally set by Phantom Liberty's own start-up, which the clean start leaves
+// out) before it switches on the open world: vendors, ripperdocs, fixers, fast
+// travel, the metro. The vendors then also wait for "prologue done" and "side
+// content allowed". Setting these starts none of the story.
+public func MpOpenWorld() -> Void {
+    let quests = GameInstance.GetQuestsSystem(GetGameInstance());
+    if !IsDefined(quests) {
+        return;
+    }
+    let facts: array<CName> = [n"CYB-629334", n"CYB-624820", n"CYB-655031", n"q000_done", n"q101_enable_side_content", n"ep1_side_content"];
+    for fact in facts {
+        if quests.GetFact(fact) < 1 {
+            quests.SetFact(fact, 1);
+        }
+    }
+}

@@ -42,6 +42,9 @@ public native class NetworkWorldSystem extends IGameSystem {
         // Story calls stay closed while on the server (see Plugins/Quests.reds).
         MpSilenceStoryHolocalls();
 
+        // Vendors, ripperdocs and the rest of the open world (Plugins/Quests.reds).
+        MpOpenWorld();
+
         // Get this character's saved balance and progress from the server
         // (and, for a brand-new character, be moved to the start point).
         // Not right away: the server's list of calls arrives in the same batch
