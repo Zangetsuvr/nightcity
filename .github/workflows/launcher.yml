@@ -81,7 +81,8 @@ jobs:
         run: |
           cd code/launcher
           pnpm install --frozen-lockfile=false
-          pnpm run build 2>&1 | tee ../../preview-log.txt
+          ls node_modules/@fontsource/*/ > ../../preview-log.txt 2>&1 || true
+          pnpm run build 2>&1 | tee -a ../../preview-log.txt
           mkdir -p /tmp/pw && cd /tmp/pw && npm init -y >/dev/null && npm install playwright@1.48.2 >/dev/null
           npx --prefix /tmp/pw playwright install --with-deps chromium >/dev/null
           cd $GITHUB_WORKSPACE/code/launcher
