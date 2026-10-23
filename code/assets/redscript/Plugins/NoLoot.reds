@@ -72,3 +72,61 @@ protected cb func OnInteractionActivated(evt: ref<InteractionActivationEvent>) -
     MpEmptyLoot(this, evt.activator);
     return wrappedMethod(evt);
 }
+
+// Bodies: the game shows their loot list without asking the prompt check
+// above, so their pockets are emptied instead (everything but what they wear).
+public func MpStripBody(target: ref<GameObject>) -> Void {
+    if !MpNoLoot() || !IsDefined(target) || target.IsPlayer() {
+        return;
+    }
+    let later = new MpStripBodyLater();
+    later.target = target;
+    GameInstance.GetDelaySystem(target.GetGame()).DelayCallback(later, 0.5, false);
+}
+
+public class MpStripBodyLater extends DelayCallback {
+    public let target: wref<GameObject>;
+
+    public func Call() -> Void {
+        let target = this.target;
+        if !IsDefined(target) || !MpNoLoot() {
+            return;
+        }
+        let ts = GameInstance.GetTransactionSystem(target.GetGame());
+        let items: array<wref<gameItemData>>;
+        ts.GetItemList(target, items);
+        let remove: array<ItemID>;
+        let amounts: array<Int32>;
+        for data in items {
+            if IsDefined(data) {
+                let id = data.GetID();
+                if NotEquals(RPGManager.GetItemCategory(id), gamedataItemCategory.Clothing) {
+                    ArrayPush(remove, id);
+                    ArrayPush(amounts, data.GetQuantity());
+                }
+            }
+        }
+        let i = 0;
+        while i < ArraySize(remove) {
+            ts.RemoveItem(target, remove[i], amounts[i]);
+            i += 1;
+        }
+    }
+}
+
+// Killed: empty the body once the game has filled its pockets.
+@wrapMethod(NPCPuppet)
+protected cb func OnDeath(evt: ref<gameDeathEvent>) -> Bool {
+    let result = wrappedMethod(evt);
+    MpStripBody(this);
+    return result;
+}
+
+// Knocked out, or a body from before: empty it when the player gets near.
+@wrapMethod(ScriptedPuppet)
+protected cb func OnInteractionActivated(evt: ref<InteractionActivationEvent>) -> Bool {
+    if IsDefined(evt.activator) && evt.activator.IsPlayer() && !ScriptedPuppet.IsActive(this) {
+        MpStripBody(this);
+    }
+    return wrappedMethod(evt);
+}
