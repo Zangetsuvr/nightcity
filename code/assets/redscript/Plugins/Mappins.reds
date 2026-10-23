@@ -1,5 +1,10 @@
+import CyberpunkMP.Plugins.*
+
 @wrapMethod(WorldMappinsContainerController)
 public func CreateMappinUIProfile(mappin: wref<IMappin>, mappinVariant: gamedataMappinVariant, customData: ref<MappinControllerCustomData>) -> MappinUIProfile {
+    if MpHiddenActivity(mappinVariant) {
+        return MappinUIProfile.None();
+    }
     if Equals(mappinVariant, gamedataMappinVariant.CPO_PingGoHereVariant) {
         return MappinUIProfile.Create(r"base\\gameplay\\gui\\widgets\\mappins\\quest\\default_mappin.inkwidget", t"MappinUISpawnProfile.Always", t"WorldMappinUIProfile.Quest");
     } else {
@@ -13,6 +18,9 @@ public func CreateMappinUIProfile(mappin: wref<IMappin>, mappinVariant: gamedata
 
 @wrapMethod(MinimapContainerController)
 public func CreateMappinUIProfile(mappin: wref<IMappin>, mappinVariant: gamedataMappinVariant, customData: ref<MappinControllerCustomData>) -> MappinUIProfile {
+    if MpHiddenActivity(mappinVariant) {
+        return MappinUIProfile.None();
+    }
     if Equals(mappinVariant, gamedataMappinVariant.CPO_PingGoHereVariant) {
         return MappinUIProfile.Create(r"mods\\cyberpunkmp\\minimap_mappin.inkwidget", t"MappinUISpawnProfile.Always", t"MinimapMappinUIProfile.Quest");
     } else {
