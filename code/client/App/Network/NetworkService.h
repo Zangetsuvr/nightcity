@@ -46,6 +46,9 @@ struct NetworkService final
     entt::dispatcher& GetDispatcher() { return m_dispatcher; }
     const server::Settings& GetServerSettings() const { return m_settings; }
 
+    // Character name sent when connecting (from the loaded save).
+    const std::string& GetUsername() const noexcept { return m_username; }
+
     TP_NOCOPYMOVE(NetworkService);
 
 protected:
@@ -61,8 +64,6 @@ protected:
 
     static ScratchAllocator& GetScratch();
 
-    // Character name sent when connecting (from the loaded save).
-    const std::string& GetUsername() const noexcept { return m_username; }
 
 private:
 
