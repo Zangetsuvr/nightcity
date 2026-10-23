@@ -14,6 +14,7 @@ namespace CharacterSystem
 
         internal Characters Characters { get; }
         internal Config Config { get; }
+        internal Phone Phone { get; }
 
         private readonly Logger _logger = new("Character");
 
@@ -48,6 +49,9 @@ namespace CharacterSystem
                 Notify = (id, message) => Server.PlayerSystem.GetById(id)?.SendChat("SERVER", message),
             };
 
+            Phone = new Phone(databaseFile, store);
+            Server.Timer.Add(_ => Phone.Tick(), 1.0f);
+
             // Other plugins (jobs, shops, loot) reach money and XP through these.
             GameServices.Economy = Characters;
             GameServices.Progression = Characters;
@@ -56,7 +60,7 @@ namespace CharacterSystem
             Server.PlayerSystem.PlayerLeftEvent += OnPlayerLeave;
 
             // Close the database cleanly when the server shuts down.
-            AppDomain.CurrentDomain.ProcessExit += (_, _) => store.Dispose();
+            AppDomain.CurrentDomain.ProcessExit += (_, _) => { Phone.Dispose(); store.Dispose(); };
 
             Server.Timer.Add(_ => Characters.SyncAll(), Config.ResyncIntervalSeconds);
 
@@ -74,6 +78,7 @@ namespace CharacterSystem
             try
             {
                 Characters.OnJoin(id, player.Username);
+                Phone.OnJoin(id, player.Username);
                 _logger.Info($"{player.Username} joined, balance {Characters.GetBalance(id)}");
             }
             catch (Exception ex)
@@ -87,6 +92,7 @@ namespace CharacterSystem
             try
             {
                 Characters.OnLeave(id);
+                Phone.OnLeave(id);
             }
             catch (Exception ex)
             {

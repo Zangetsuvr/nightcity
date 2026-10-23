@@ -778,7 +778,8 @@ public class MultiplayerGameController extends inkGameController {
 
     private final func OpenJobBoard() -> Void {
         let board = MpJobBoard.Get();
-        if !IsDefined(board) || board.IsOpen() {
+        let phone = MpPhone.Get();
+        if !IsDefined(board) || board.IsOpen() || (IsDefined(phone) && phone.IsOpen()) {
             return;
         }
         this.m_uiSystem.PushGameContext(UIGameContext.ModalPopup);
@@ -808,6 +809,25 @@ public class MultiplayerGameController extends inkGameController {
         uiBlackboard.SetBool(GetAllBlackboardDefs().UIGameData.UIMultiplayerContextRequest, true, true);
         this.EnableServerInput();
         panel.Open(this);
+    }
+
+    // The players' phone (Ink/PhoneUI.reds), opened by the phone key on the server.
+    public final func OpenPhonePanel() -> Void {
+        let phone = MpPhone.Get();
+        let board = MpJobBoard.Get();
+        let admin = MpAdminPanel.Get();
+        if !IsDefined(phone) || phone.IsOpen() || (IsDefined(board) && board.IsOpen()) || (IsDefined(admin) && admin.IsOpen()) {
+            return;
+        }
+        this.m_uiSystem.PushGameContext(UIGameContext.ModalPopup);
+        this.m_uiSystem.RequestNewVisualState(n"inkModalPopupState");
+        PopupStateUtils.SetBackgroundBlur(this, true);
+        this.m_audioSystem.Play(n"ui_phone_incoming_call_positive");
+        let blackboardSystem: ref<BlackboardSystem> = GameInstance.GetBlackboardSystem(GetGameInstance());
+        let uiBlackboard: ref<IBlackboard> = blackboardSystem.Get(GetAllBlackboardDefs().UIGameData);
+        uiBlackboard.SetBool(GetAllBlackboardDefs().UIGameData.UIMultiplayerContextRequest, true, true);
+        this.EnableServerInput();
+        phone.Open(this);
     }
 
     public final func OnJobBoardClosed() -> Void {
@@ -1018,6 +1038,14 @@ public class MultiplayerGameController extends inkGameController {
                 };
             }
         } else {
+            let phone = MpPhone.Get();
+            if IsDefined(phone) && phone.IsOpen() {
+                if Equals(actionName, n"OpenPauseMenu") {
+                    ListenerActionConsumer.DontSendReleaseEvent(consumer);
+                    return true;
+                }
+                return phone.HandleAction(actionName, Equals(actionType, gameinputActionType.BUTTON_PRESSED));
+            }
             let admin = MpAdminPanel.Get();
             if IsDefined(admin) && admin.IsOpen() {
                 if Equals(actionName, n"OpenPauseMenu") {

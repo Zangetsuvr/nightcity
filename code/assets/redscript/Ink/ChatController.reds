@@ -122,8 +122,42 @@ public class ChatController extends inkHUDGameController {
         this.UpdateInputHints();
     }
 
+    // Opened from the phone to write a text: the box comes up with "@Name: ".
+    protected cb func OnMpOpenChat(evt: ref<MpOpenChatEvent>) -> Bool {
+        if !this.m_chatInputOpen {
+            this.ShowChatInput(true);
+        }
+        this.m_input.SetText(evt.text);
+        this.m_input.MoveCaret(StrLen(evt.text));
+    }
+
     private final func SendChat() -> Void {
         let textEntered: String = this.m_input.GetText();
+        // Texts: "@Name: message" (from the phone) and "/r message" (reply to
+        // the last text you got).
+        if StrBeginsWith(textEntered, "@") && StrContains(textEntered, ":") {
+            let to = StrBeforeFirst(StrAfterFirst(textEntered, "@"), ":");
+            let body = StrAfterFirst(textEntered, ":");
+            PhoneServer.SendText(to, body);
+            return;
+        }
+        if StrBeginsWith(textEntered, "/r ") {
+            let phone = MpPhone.Get();
+            let to = IsDefined(phone) ? phone.GetLastSender() : "";
+            if StrLen(to) == 0 {
+                MpJobMessage("Nobody has texted you yet.");
+            } else {
+                PhoneServer.SendText(to, StrAfterFirst(textEntered, " "));
+            }
+            return;
+        }
+        if Equals(textEntered, "/phone") {
+            let phone = MpPhone.Get();
+            if IsDefined(phone) {
+                phone.RequestOpen();
+            }
+            return;
+        }
         if Equals(textEntered, "/admin") {
             AdminServer.OpenPanel();
             return;
