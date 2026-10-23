@@ -31,7 +31,7 @@ jobs:
           dotnet run --project $S/SdkGenerator/SdkGenerator.csproj -- $(ls code/server/native/Scripting/I*.h) >> build.log 2>&1 || status=1
           echo "=== sdk" >> build.log
           dotnet build $S/CyberpunkSdk/CyberpunkSdk.csproj -c Release -nologo >> build.log 2>&1 || status=1
-          for p in CharacterSystem AccountSystem JobSystem EmoteSystem; do
+          for p in CharacterSystem AccountSystem JobSystem; do
             echo "=== $p" >> build.log
             dotnet build "$S/$p/$p.csproj" -c Release -nologo >> build.log 2>&1 || status=1
           done

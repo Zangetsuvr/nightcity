@@ -1,4 +1,5 @@
 using CyberpunkSdk;
+using CyberpunkSdk.Systems;
 using CyberpunkSdk.Types;
 
 namespace JobSystem.Board
