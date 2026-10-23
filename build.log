@@ -1,0 +1,102 @@
+=== codegen
+  Determining projects to restore...
+  Restored /home/runner/work/nightcity/nightcity/code/server/scripting/SdkGenerator/SdkGenerator.csproj (in 4.23 sec).
+  SdkGenerator -> /home/runner/work/nightcity/nightcity/code/server/scripting/SdkGenerator/bin/Debug/net8.0/SdkGenerator.dll
+
+Build succeeded.
+    0 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:24.20
+Parsing libraries...
+Parsing code...
+Parsed 'IAttachmentComponent.h, IBuffer.h, IConfig.h, ILogger.h, IMovementComponent.h, IPlayer.h, IPlayerManager.h, IRpc.h, IWorld.h'
+Processing code...
+Generating code...
+Generated 'Std.cs'
+Generated 'CyberpunkSdk.Internal.cs'
+Parsing libraries...
+Parsing code...
+Parsed 'ServerAPI.h'
+Processing code...
+Generating code...
+Generated 'Std.cs'
+Generated 'CyberpunkMp.cs'
+=== sdk
+  Determining projects to restore...
+  Restored /home/runner/work/nightcity/nightcity/code/server/scripting/CyberpunkSdk/CyberpunkSdk.csproj (in 951 ms).
+/home/runner/work/nightcity/nightcity/code/server/scripting/CyberpunkSdk/WebApi.cs(13,67): warning CS8603: Possible null reference return. [/home/runner/work/nightcity/nightcity/code/server/scripting/CyberpunkSdk/CyberpunkSdk.csproj]
+/home/runner/work/nightcity/nightcity/code/server/scripting/CyberpunkSdk/Server.cs(11,36): warning CS8618: Non-nullable property 'PlayerSystem' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the property as nullable. [/home/runner/work/nightcity/nightcity/code/server/scripting/CyberpunkSdk/CyberpunkSdk.csproj]
+/home/runner/work/nightcity/nightcity/code/server/scripting/CyberpunkSdk/Server.cs(12,29): warning CS8618: Non-nullable property 'World' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the property as nullable. [/home/runner/work/nightcity/nightcity/code/server/scripting/CyberpunkSdk/CyberpunkSdk.csproj]
+/home/runner/work/nightcity/nightcity/code/server/scripting/CyberpunkSdk/Server.cs(13,29): warning CS8618: Non-nullable property 'Timer' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the property as nullable. [/home/runner/work/nightcity/nightcity/code/server/scripting/CyberpunkSdk/CyberpunkSdk.csproj]
+/home/runner/work/nightcity/nightcity/code/server/scripting/CyberpunkSdk/Server.cs(14,35): warning CS8618: Non-nullable property 'RpcManager' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the property as nullable. [/home/runner/work/nightcity/nightcity/code/server/scripting/CyberpunkSdk/CyberpunkSdk.csproj]
+  CyberpunkSdk -> /home/runner/work/nightcity/nightcity/code/server/scripting/CyberpunkSdk/bin/Release/net8.0/CyberpunkSdk.dll
+
+Build succeeded.
+
+/home/runner/work/nightcity/nightcity/code/server/scripting/CyberpunkSdk/WebApi.cs(13,67): warning CS8603: Possible null reference return. [/home/runner/work/nightcity/nightcity/code/server/scripting/CyberpunkSdk/CyberpunkSdk.csproj]
+/home/runner/work/nightcity/nightcity/code/server/scripting/CyberpunkSdk/Server.cs(11,36): warning CS8618: Non-nullable property 'PlayerSystem' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the property as nullable. [/home/runner/work/nightcity/nightcity/code/server/scripting/CyberpunkSdk/CyberpunkSdk.csproj]
+/home/runner/work/nightcity/nightcity/code/server/scripting/CyberpunkSdk/Server.cs(12,29): warning CS8618: Non-nullable property 'World' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the property as nullable. [/home/runner/work/nightcity/nightcity/code/server/scripting/CyberpunkSdk/CyberpunkSdk.csproj]
+/home/runner/work/nightcity/nightcity/code/server/scripting/CyberpunkSdk/Server.cs(13,29): warning CS8618: Non-nullable property 'Timer' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the property as nullable. [/home/runner/work/nightcity/nightcity/code/server/scripting/CyberpunkSdk/CyberpunkSdk.csproj]
+/home/runner/work/nightcity/nightcity/code/server/scripting/CyberpunkSdk/Server.cs(14,35): warning CS8618: Non-nullable property 'RpcManager' must contain a non-null value when exiting constructor. Consider adding the 'required' modifier or declaring the property as nullable. [/home/runner/work/nightcity/nightcity/code/server/scripting/CyberpunkSdk/CyberpunkSdk.csproj]
+    5 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:03.22
+=== CharacterSystem
+  Determining projects to restore...
+  Restored /home/runner/work/nightcity/nightcity/code/server/scripting/CharacterSystem/CharacterSystem.csproj (in 1.42 sec).
+  1 of 2 projects are up-to-date for restore.
+  CyberpunkSdk -> /home/runner/work/nightcity/nightcity/code/server/scripting/CyberpunkSdk/bin/Release/net8.0/CyberpunkSdk.dll
+/home/runner/work/nightcity/nightcity/code/server/scripting/CharacterSystem/Characters.cs(362,17): warning CS8602: Dereference of a possibly null reference. [/home/runner/work/nightcity/nightcity/code/server/scripting/CharacterSystem/CharacterSystem.csproj]
+  CharacterSystem -> /home/runner/work/nightcity/nightcity/code/server/scripting/CharacterSystem/bin/Release/net8.0/CharacterSystem.dll
+
+Build succeeded.
+
+/home/runner/work/nightcity/nightcity/code/server/scripting/CharacterSystem/Characters.cs(362,17): warning CS8602: Dereference of a possibly null reference. [/home/runner/work/nightcity/nightcity/code/server/scripting/CharacterSystem/CharacterSystem.csproj]
+    1 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:05.11
+=== AccountSystem
+  Determining projects to restore...
+  Restored /home/runner/work/nightcity/nightcity/code/server/scripting/AccountSystem/AccountSystem.csproj (in 296 ms).
+  1 of 2 projects are up-to-date for restore.
+  CyberpunkSdk -> /home/runner/work/nightcity/nightcity/code/server/scripting/CyberpunkSdk/bin/Release/net8.0/CyberpunkSdk.dll
+  AccountSystem -> /home/runner/work/nightcity/nightcity/code/server/scripting/AccountSystem/bin/Release/net8.0/AccountSystem.dll
+
+Build succeeded.
+    0 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:03.16
+=== JobSystem
+  Determining projects to restore...
+  Restored /home/runner/work/nightcity/nightcity/code/server/scripting/JobSystem/JobSystem.csproj (in 421 ms).
+  1 of 2 projects are up-to-date for restore.
+  CyberpunkSdk -> /home/runner/work/nightcity/nightcity/code/server/scripting/CyberpunkSdk/bin/Release/net8.0/CyberpunkSdk.dll
+/home/runner/work/nightcity/nightcity/code/server/scripting/JobSystem/Taxi.cs(152,27): warning CS8602: Dereference of a possibly null reference. [/home/runner/work/nightcity/nightcity/code/server/scripting/JobSystem/JobSystem.csproj]
+/home/runner/work/nightcity/nightcity/code/server/scripting/JobSystem/Taxi.cs(255,13): warning CS8602: Dereference of a possibly null reference. [/home/runner/work/nightcity/nightcity/code/server/scripting/JobSystem/JobSystem.csproj]
+/home/runner/work/nightcity/nightcity/code/server/scripting/JobSystem/Taxi.cs(282,13): warning CS8602: Dereference of a possibly null reference. [/home/runner/work/nightcity/nightcity/code/server/scripting/JobSystem/JobSystem.csproj]
+/home/runner/work/nightcity/nightcity/code/server/scripting/JobSystem/JobManager.cs(72,53): warning CS8603: Possible null reference return. [/home/runner/work/nightcity/nightcity/code/server/scripting/JobSystem/JobSystem.csproj]
+/home/runner/work/nightcity/nightcity/code/server/scripting/JobSystem/DeliveryDriver.cs(148,17): warning CS8602: Dereference of a possibly null reference. [/home/runner/work/nightcity/nightcity/code/server/scripting/JobSystem/JobSystem.csproj]
+/home/runner/work/nightcity/nightcity/code/server/scripting/JobSystem/DeliveryDriver.cs(171,13): warning CS8602: Dereference of a possibly null reference. [/home/runner/work/nightcity/nightcity/code/server/scripting/JobSystem/JobSystem.csproj]
+/home/runner/work/nightcity/nightcity/code/server/scripting/JobSystem/Taxi.cs(32,32): warning CS8602: Dereference of a possibly null reference. [/home/runner/work/nightcity/nightcity/code/server/scripting/JobSystem/JobSystem.csproj]
+/home/runner/work/nightcity/nightcity/code/server/scripting/JobSystem/DeliveryDriver.cs(204,27): warning CS8602: Dereference of a possibly null reference. [/home/runner/work/nightcity/nightcity/code/server/scripting/JobSystem/JobSystem.csproj]
+  JobSystem -> /home/runner/work/nightcity/nightcity/code/server/scripting/JobSystem/bin/Release/net8.0/JobSystem.dll
+
+Build succeeded.
+
+/home/runner/work/nightcity/nightcity/code/server/scripting/JobSystem/Taxi.cs(152,27): warning CS8602: Dereference of a possibly null reference. [/home/runner/work/nightcity/nightcity/code/server/scripting/JobSystem/JobSystem.csproj]
+/home/runner/work/nightcity/nightcity/code/server/scripting/JobSystem/Taxi.cs(255,13): warning CS8602: Dereference of a possibly null reference. [/home/runner/work/nightcity/nightcity/code/server/scripting/JobSystem/JobSystem.csproj]
+/home/runner/work/nightcity/nightcity/code/server/scripting/JobSystem/Taxi.cs(282,13): warning CS8602: Dereference of a possibly null reference. [/home/runner/work/nightcity/nightcity/code/server/scripting/JobSystem/JobSystem.csproj]
+/home/runner/work/nightcity/nightcity/code/server/scripting/JobSystem/JobManager.cs(72,53): warning CS8603: Possible null reference return. [/home/runner/work/nightcity/nightcity/code/server/scripting/JobSystem/JobSystem.csproj]
+/home/runner/work/nightcity/nightcity/code/server/scripting/JobSystem/DeliveryDriver.cs(148,17): warning CS8602: Dereference of a possibly null reference. [/home/runner/work/nightcity/nightcity/code/server/scripting/JobSystem/JobSystem.csproj]
+/home/runner/work/nightcity/nightcity/code/server/scripting/JobSystem/DeliveryDriver.cs(171,13): warning CS8602: Dereference of a possibly null reference. [/home/runner/work/nightcity/nightcity/code/server/scripting/JobSystem/JobSystem.csproj]
+/home/runner/work/nightcity/nightcity/code/server/scripting/JobSystem/Taxi.cs(32,32): warning CS8602: Dereference of a possibly null reference. [/home/runner/work/nightcity/nightcity/code/server/scripting/JobSystem/JobSystem.csproj]
+/home/runner/work/nightcity/nightcity/code/server/scripting/JobSystem/DeliveryDriver.cs(204,27): warning CS8602: Dereference of a possibly null reference. [/home/runner/work/nightcity/nightcity/code/server/scripting/JobSystem/JobSystem.csproj]
+    8 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:03.15
+status=0
