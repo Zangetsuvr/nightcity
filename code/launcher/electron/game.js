@@ -48,7 +48,7 @@ const sleep = ms => new Promise(resolve => setTimeout(resolve, ms))
  * Cyberpunk2077.exe to be gone (two checks in a row) before resolving.
  */
 export async function launchAndWait (exePath, host, port) {
-  const child = spawn(exePath, ['-ip', String(host), '-port', String(port), '--launcher-skip', '-skipStartScreen'], {
+  const child = spawn(exePath, ['-online', '--online', '-ip', String(host), '-port', String(port), '--launcher-skip', '-skipStartScreen'], {
     cwd: path.dirname(exePath),
     detached: true,
     stdio: 'ignore'
