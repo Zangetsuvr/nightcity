@@ -27,9 +27,17 @@ protected cb func OnSavesForLoadReady(saves: array<String>) -> Bool {
     if world.GetAccountCharacterCount() > 0 && ArraySize(saves) > 0 {
         this.GetSystemRequestsHandler().LoadLastCheckpoint(false);
     } else {
-        this.m_menuEventDispatcher.SpawnEvent(n"OnNewGame");
+        // Give the menu a moment to finish setting up, as a player would.
+        let next = new MpMenuAdvance();
+        next.mainMenu = this;
+        MpAdvanceSoon(next, 1.0);
     }
     return result;
+}
+
+@addMethod(SingleplayerMenuGameController)
+public func MpStartNewGame() -> Void {
+    this.m_menuEventDispatcher.SpawnEvent(n"OnNewGame");
 }
 
 // New Game, straight to making your character.
@@ -47,12 +55,16 @@ public func MpSkipsNewGameChoices() -> Bool {
 
 // Calls back into a menu shortly after it opens, once it's fully set up.
 public class MpMenuAdvance extends DelayCallback {
+    public let mainMenu: wref<SingleplayerMenuGameController>;
     public let expansion: wref<ExpansionNewGame>;
     public let difficulty: wref<DifficultySelectionMenu>;
     public let lifePath: wref<CharacterCreationBackstorySelectionMenu>;
     public let bodyType: wref<CharacterCreationGenderSelectionMenu>;
 
     public func Call() -> Void {
+        if IsDefined(this.mainMenu) {
+            this.mainMenu.MpStartNewGame();
+        }
         if IsDefined(this.expansion) {
             this.expansion.MpChooseStart();
         }
@@ -79,7 +91,8 @@ protected cb func OnInitialize() -> Bool {
         this.GetRootWidget().SetVisible(false);
         let next = new MpMenuAdvance();
         next.expansion = this;
-        MpAdvanceSoon(next);
+        // This screen sets up the character creator's state; let it finish.
+        MpAdvanceSoon(next, 2.0);
     }
     return result;
 }
@@ -97,7 +110,7 @@ protected cb func OnInitialize() -> Bool {
         this.GetRootWidget().SetVisible(false);
         let next = new MpMenuAdvance();
         next.difficulty = this;
-        MpAdvanceSoon(next);
+        MpAdvanceSoon(next, 0.5);
     }
     return result;
 }
@@ -118,7 +131,7 @@ protected cb func OnInitialize() -> Bool {
         next.lifePath = this;
         // The body type previews start loading behind this screen; give them a
         // moment, as a player reading the lifepaths would.
-        MpAdvanceSoon(next, 3.0);
+        MpAdvanceSoon(next, 1.5);
     }
     return result;
 }
