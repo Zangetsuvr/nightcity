@@ -344,6 +344,9 @@ namespace CharacterSystem
                     d.Location.Y.ToString(System.Globalization.CultureInfo.InvariantCulture),
                     d.Location.Z.ToString(System.Globalization.CultureInfo.InvariantCulture)),
             };
+            var inv = System.Globalization.CultureInfo.InvariantCulture;
+            foreach (var m in _config.MapMarkers)
+                lines.Add(string.Join("~", "M", Clean(m.Type), Clean(m.Name), m.X.ToString(inv), m.Y.ToString(inv), m.Z.ToString(inv)));
             foreach (var car in d.Cars)
                 lines.Add(string.Join("~", "V", Clean(car.Record), Clean(car.Name), car.Price.ToString()));
             PushShopData(playerId, string.Join("^", lines));

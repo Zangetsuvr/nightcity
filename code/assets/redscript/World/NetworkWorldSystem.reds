@@ -49,9 +49,6 @@ public native class NetworkWorldSystem extends IGameSystem {
         // that list is read goes nowhere.
         GameInstance.GetDelaySystem(GetGameInstance()).DelayCallback(new MpRequestCharacterSync(), 1.0, false);
 
-        // Every shop and place of interest on the map (Plugins/Shops.reds).
-        MpRevealMapSoon();
-
         // Keep the local save current while on the server (Plugins/Saving.reds).
         let keeper = MpSaveKeeper.Get();
         if IsDefined(keeper) {

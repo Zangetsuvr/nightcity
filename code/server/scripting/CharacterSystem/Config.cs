@@ -81,6 +81,17 @@ namespace CharacterSystem
         };
     }
 
+    /// <summary>An extra icon on everyone's map: a gun shop, ripperdoc, clothing store...</summary>
+    public class MapMarker
+    {
+        /// <summary>guns, ripperdoc, clothes, food, bar, meds, tech, junk, netrunner, melee, dropoff, blackmarket, car</summary>
+        public string Type { get; set; } = "guns";
+        public string Name { get; set; } = "";
+        public float X { get; set; }
+        public float Y { get; set; }
+        public float Z { get; set; }
+    }
+
     public class Config
     {
         /// <summary>Money a brand-new character starts with.</summary>
@@ -191,6 +202,13 @@ namespace CharacterSystem
             new() { Tier = 4, Capacity = 200, Price = 75_000, MaxQuality = "Epic" },
             new() { Tier = 5, Capacity = 280, Price = 150_000, MaxQuality = "Legendary" },
         };
+
+        /// <summary>
+        /// Icons everyone sees on the map from the start (the game only shows a shop
+        /// once you've been near it). Stand at a shop, type /where in chat, and add
+        /// it here with its type.
+        /// </summary>
+        public List<MapMarker> MapMarkers { get; set; } = new();
 
         /// <summary>The car dealership: where it is and what it sells.</summary>
         public Dealership Dealership { get; set; } = new();

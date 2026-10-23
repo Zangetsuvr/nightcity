@@ -226,6 +226,7 @@ public class MpDealership extends ScriptableSystem {
     public let m_cars: array<ref<MpCarOffer>>;
     private let m_mappin: NewMappinID;
     private let m_hasMappin: Bool;
+    private let m_markers: array<NewMappinID>;
 
     public static func Get() -> ref<MpDealership> {
         return GameInstance.GetScriptableSystemsContainer(GetGameInstance()).Get(n"CyberpunkMP.Plugins.MpDealership") as MpDealership;
@@ -233,6 +234,11 @@ public class MpDealership extends ScriptableSystem {
 
     public func Load(payload: String) -> Void {
         ArrayClear(this.m_cars);
+        let mappins = GameInstance.GetMappinSystem(this.GetGameInstance());
+        for id in this.m_markers {
+            mappins.UnregisterMappin(id);
+        }
+        ArrayClear(this.m_markers);
         for record in StrSplit(payload, "^") {
             let f = StrSplit(record, "~");
             if ArraySize(f) >= 5 && Equals(f[0], "D") {
@@ -240,6 +246,10 @@ public class MpDealership extends ScriptableSystem {
                 this.m_position = new Vector4(StringToFloat(f[2]), StringToFloat(f[3]), StringToFloat(f[4]), 1.0);
                 this.m_known = true;
             } else {
+                if ArraySize(f) >= 6 && Equals(f[0], "M") {
+                    let position = new Vector4(StringToFloat(f[3]), StringToFloat(f[4]), StringToFloat(f[5]), 1.0);
+                    ArrayPush(this.m_markers, MpRegisterMapIcon(MpMarkerVariant(f[1]), position));
+                }
                 if ArraySize(f) >= 4 && Equals(f[0], "V") {
                     // Only cars this version of the game actually has.
                     if IsDefined(TweakDBInterface.GetVehicleRecord(TDBID.Create(f[1]))) {
@@ -264,12 +274,7 @@ public class MpDealership extends ScriptableSystem {
         if !this.m_known {
             return;
         }
-        let data: MappinData;
-        data.mappinType = t"Mappins.QuestStaticMappinDefinition";
-        data.variant = gamedataMappinVariant.Zzz01_CarForPurchaseVariant;
-        data.active = true;
-        data.visibleThroughWalls = false;
-        this.m_mappin = mappins.RegisterMappin(data, this.m_position);
+        this.m_mappin = MpRegisterMapIcon(gamedataMappinVariant.Zzz01_CarForPurchaseVariant, this.m_position);
         this.m_hasMappin = true;
     }
 
@@ -290,19 +295,30 @@ public func MpUnlockVehicles(records: String) -> Void {
     }
 }
 
-// ------------------------------------------------------------------ the whole map
-
-// Shows every shop, ripperdoc and other place of interest on the map from the
-// start, so nobody has to explore to find them. Uses the game's own
-// "show all points of interest" switch, once per session on the server.
-public class MpRevealMap extends DelayCallback {
-    public func Call() -> Void {
-        if MpWorldKeepsRunning() {
-            GameInstance.GetJournalManager(GetGameInstance()).DebugShowAllPoiMappins();
-        }
-    }
+// A fixed icon that shows on the world map and minimap, like the game's own
+// drop points.
+public func MpRegisterMapIcon(variant: gamedataMappinVariant, position: Vector4) -> NewMappinID {
+    let data: MappinData;
+    data.mappinType = t"Mappins.DropPointStaticMappin";
+    data.variant = variant;
+    data.active = true;
+    data.visibleThroughWalls = false;
+    return GameInstance.GetMappinSystem(GetGameInstance()).RegisterMappin(data, position);
 }
 
-public func MpRevealMapSoon() -> Void {
-    GameInstance.GetDelaySystem(GetGameInstance()).DelayCallback(new MpRevealMap(), 3.0, false);
+public func MpMarkerVariant(kind: String) -> gamedataMappinVariant {
+    let k = StrLower(kind);
+    if Equals(k, "ripperdoc") { return gamedataMappinVariant.ServicePointRipperdocVariant; }
+    if Equals(k, "clothes") { return gamedataMappinVariant.ServicePointClothesVariant; }
+    if Equals(k, "food") { return gamedataMappinVariant.ServicePointFoodVariant; }
+    if Equals(k, "bar") { return gamedataMappinVariant.ServicePointBarVariant; }
+    if Equals(k, "meds") { return gamedataMappinVariant.ServicePointMedsVariant; }
+    if Equals(k, "tech") { return gamedataMappinVariant.ServicePointTechVariant; }
+    if Equals(k, "junk") { return gamedataMappinVariant.ServicePointJunkVariant; }
+    if Equals(k, "netrunner") { return gamedataMappinVariant.ServicePointNetTrainerVariant; }
+    if Equals(k, "melee") { return gamedataMappinVariant.ServicePointMeleeTrainerVariant; }
+    if Equals(k, "dropoff") { return gamedataMappinVariant.ServicePointDropPointVariant; }
+    if Equals(k, "blackmarket") { return gamedataMappinVariant.Zzz14_ServicePointBlackMarketVariant; }
+    if Equals(k, "car") { return gamedataMappinVariant.Zzz01_CarForPurchaseVariant; }
+    return gamedataMappinVariant.ServicePointGunsVariant;
 }
