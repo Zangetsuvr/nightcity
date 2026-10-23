@@ -170,6 +170,10 @@ export function registerServerLauncher ({ electron, store, getWindow, configDir 
     playing = { key, info, startedAt: new Date() }
     progress({ step: 'playing' })
     void presenceLoop(key)
+    // Out of the way before the game opens: a launcher window in front at
+    // startup keeps the game from taking the mouse (a Windows pointer stays on
+    // screen until the player Alt+Tabs).
+    getWindow()?.minimize()
     try {
       await launchAndWait(exePath, gameIp, port)
     } finally {
