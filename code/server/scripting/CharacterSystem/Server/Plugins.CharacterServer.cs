@@ -47,5 +47,26 @@ public static partial class CharacterServer
 
 	public static partial void ReportLocalBalance_Impl(ulong playerId, long localBalance, long lastFromServer);
 
+	[ServerRpc(Class = 13755933945251012755, Function = 6693882128135423153)]
+	public static void BuyCyberwareTier(ulong playerId, IBuffer data)
+	{
+		ushort length = 0;
+
+		BuyCyberwareTier_Impl(playerId);
+	}
+
+	public static partial void BuyCyberwareTier_Impl(ulong playerId);
+
+	[ServerRpc(Class = 13755933945251012755, Function = 16486012221144223193)]
+	public static void BuyVehicle(ulong playerId, IBuffer data)
+	{
+		ushort length = 0;
+		var record = data.ReadString();
+
+		BuyVehicle_Impl(playerId, record);
+	}
+
+	public static partial void BuyVehicle_Impl(ulong playerId, string record);
+
 }
 }

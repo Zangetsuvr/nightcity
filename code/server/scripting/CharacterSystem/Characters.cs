@@ -30,6 +30,15 @@ namespace CharacterSystem
         /// <summary>Give a player's game its starter kit ("item,quantity,equip|...").</summary>
         public Action<ulong, string> PushStarterKit { get; set; } = (_, _) => { };
 
+        /// <summary>Tell a player's game its cyberware tier: tier, capacity, best quality (1-5), price of the next tier (0 = none).</summary>
+        public Action<ulong, int, int, int, int> PushCyberware { get; set; } = (_, _, _, _, _) => { };
+
+        /// <summary>Send a player's game the dealership (where it is and what it sells).</summary>
+        public Action<ulong, string> PushShopData { get; set; } = (_, _) => { };
+
+        /// <summary>Make the given cars ("|"-separated records) available in the player's garage.</summary>
+        public Action<ulong, string> PushVehicles { get; set; } = (_, _) => { };
+
         /// <summary>Show a player a short message.</summary>
         public Action<ulong, string> Notify { get; set; } = (_, _) => { };
 
@@ -314,7 +323,112 @@ namespace CharacterSystem
                 return;
             PlaceIfNew(playerId);
             Sync(playerId);
+            SendShopState(playerId);
         }
+
+        // ---------------------------------------------------------------- cyberware and cars
+
+        /// <summary>Cyberware tier, the dealership and the cars this character owns.</summary>
+        public void SendShopState(ulong playerId)
+        {
+            var key = KeyOf(playerId);
+            if (key == null)
+                return;
+
+            SendCyberware(playerId, _store.Read(key, r => r.CyberwareTier));
+
+            var d = _config.Dealership;
+            var lines = new List<string>
+            {
+                string.Join("~", "D", Clean(d.Name), d.Location.X.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                    d.Location.Y.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                    d.Location.Z.ToString(System.Globalization.CultureInfo.InvariantCulture)),
+            };
+            foreach (var car in d.Cars)
+                lines.Add(string.Join("~", "V", Clean(car.Record), Clean(car.Name), car.Price.ToString()));
+            PushShopData(playerId, string.Join("^", lines));
+
+            var owned = _store.Read(key, r => r.OwnedVehicles.ToList());
+            if (owned.Count > 0)
+                PushVehicles(playerId, string.Join("|", owned));
+        }
+
+        private void SendCyberware(ulong playerId, int tier)
+        {
+            var tiers = _config.CyberwareTiers.OrderBy(t => t.Tier).ToList();
+            var current = tiers.LastOrDefault(t => t.Tier <= tier) ?? tiers.FirstOrDefault();
+            if (current == null)
+                return;
+            var next = tiers.FirstOrDefault(t => t.Tier > current.Tier);
+            PushCyberware(playerId, current.Tier, current.Capacity, QualityRank(current.MaxQuality),
+                next == null ? 0 : (int)Math.Min(int.MaxValue, next.Price));
+        }
+
+        public static int QualityRank(string quality) => quality.Trim().ToLowerInvariant() switch
+        {
+            "common" => 1,
+            "uncommon" => 2,
+            "rare" => 3,
+            "epic" => 4,
+            "legendary" => 5,
+            _ => 5,
+        };
+
+        /// <summary>Move up one cyberware tier, if the player can pay for it.</summary>
+        public void BuyCyberwareTier(ulong playerId)
+        {
+            var key = KeyOf(playerId);
+            if (key == null || !_security.AllowCall(playerId, "cyberware-tier", 2))
+                return;
+
+            var tier = _store.Read(key, r => r.CyberwareTier);
+            var next = _config.CyberwareTiers.OrderBy(t => t.Tier).FirstOrDefault(t => t.Tier > tier);
+            if (next == null)
+            {
+                Notify(playerId, "You're already at the highest cyberware tier.");
+                return;
+            }
+
+            if (next.Price > 0 && !Debit(playerId, next.Price, $"Cyberware tier {next.Tier}"))
+            {
+                Notify(playerId, $"Cyberware tier {next.Tier} costs {next.Price} eddies. You can't cover it.");
+                return;
+            }
+
+            _store.Modify(key, r => { r.CyberwareTier = next.Tier; return true; });
+            Notify(playerId, $"Cyberware tier {next.Tier}: capacity {next.Capacity}, implants up to {next.MaxQuality}.");
+            SendCyberware(playerId, next.Tier);
+        }
+
+        /// <summary>Buy a car from the dealership. It goes to the player's garage.</summary>
+        public void BuyVehicle(ulong playerId, string record)
+        {
+            var key = KeyOf(playerId);
+            if (key == null || !_security.AllowCall(playerId, "buy-vehicle", 2))
+                return;
+
+            var offer = _config.Dealership.Cars.FirstOrDefault(c => string.Equals(c.Record, record, StringComparison.Ordinal));
+            if (offer == null)
+                return;
+
+            if (_store.Read(key, r => r.OwnedVehicles.Contains(offer.Record)))
+            {
+                Notify(playerId, $"You already own a {offer.Name}. Call it from your phone.");
+                return;
+            }
+
+            if (offer.Price > 0 && !Debit(playerId, offer.Price, $"Dealership: {offer.Name}"))
+            {
+                Notify(playerId, $"The {offer.Name} costs {offer.Price} eddies. You can't cover it.");
+                return;
+            }
+
+            _store.Modify(key, r => { r.OwnedVehicles.Add(offer.Record); return true; });
+            Notify(playerId, $"You bought a {offer.Name}. It's in your garage: call it from your phone.");
+            PushVehicles(playerId, offer.Record);
+        }
+
+        private static string Clean(string text) => (text ?? "").Replace("~", "-").Replace("^", "-").Replace("|", "-");
 
         /// <summary>
         /// The game asks for a sync once it's connected and standing in the world.

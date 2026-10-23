@@ -38,6 +38,12 @@
         /// <summary>Lifepath picked in the character creator (Corpo, Nomad, StreetKid), once known.</summary>
         public string? Lifepath { get; set; }
 
+        /// <summary>Cyberware tier bought at a ripperdoc (see CyberwareTiers in character.json).</summary>
+        public int CyberwareTier { get; set; } = 1;
+
+        /// <summary>Cars bought at the dealership (vehicle records).</summary>
+        public List<string> OwnedVehicles { get; set; } = new();
+
         public long GetXp(string track) => Xp.TryGetValue(track, out var v) ? v : 0;
     }
 

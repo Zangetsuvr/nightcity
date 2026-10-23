@@ -33,6 +33,54 @@ namespace CharacterSystem
         }
     }
 
+    /// <summary>A cyberware tier: how much chrome you can carry, and the best implants you may install.</summary>
+    public class CyberwareTier
+    {
+        public int Tier { get; set; }
+        /// <summary>Cyberware capacity at this tier (replaces the game's own number).</summary>
+        public int Capacity { get; set; }
+        /// <summary>What it costs to move up to this tier.</summary>
+        public long Price { get; set; }
+        /// <summary>Best implant quality allowed: Common, Uncommon, Rare, Epic or Legendary.</summary>
+        public string MaxQuality { get; set; } = "Common";
+    }
+
+    /// <summary>A car the dealership sells.</summary>
+    public class CarOffer
+    {
+        /// <summary>The game's vehicle record, e.g. "Vehicle.v_standard2_archer_hella_player".</summary>
+        public string Record { get; set; } = "";
+        public string Name { get; set; } = "";
+        public long Price { get; set; }
+
+        public CarOffer() { }
+        public CarOffer(string record, string name, long price) { Record = record; Name = name; Price = price; }
+    }
+
+    public class Dealership
+    {
+        public string Name { get; set; } = "Night City Motors";
+        /// <summary>Where it is. Stand there in game and type /where in chat to get the numbers.</summary>
+        public StartPoint Location { get; set; } = new() { X = -1712.4f, Y = -1956.6f, Z = 62.4f };
+        public List<CarOffer> Cars { get; set; } = new()
+        {
+            new("Vehicle.v_standard2_archer_hella_player", "Archer Hella", 9000),
+            new("Vehicle.v_standard2_makigai_maimai_player", "Makigai MaiMai", 11000),
+            new("Vehicle.v_standard2_villefort_cortes_player", "Villefort Cortes", 16000),
+            new("Vehicle.v_standard25_thorton_colby_player", "Thorton Colby", 18000),
+            new("Vehicle.v_standard3_thorton_mackinaw_player", "Thorton Mackinaw", 24000),
+            new("Vehicle.v_standard25_mahir_supron_player", "Mahir Supron", 27000),
+            new("Vehicle.v_standard3_chevalier_emperor_player", "Chevalier Emperor", 35000),
+            new("Vehicle.v_sportbike1_yaiba_kusanagi_player", "Yaiba Kusanagi", 42000),
+            new("Vehicle.v_sport2_villefort_alvarado_player", "Villefort Alvarado", 55000),
+            new("Vehicle.v_sport2_mizutani_shion_player", "Mizutani Shion", 75000),
+            new("Vehicle.v_sport2_quadra_type66_player", "Quadra Type-66", 90000),
+            new("Vehicle.v_sport1_quadra_turbo_player", "Quadra Turbo-R", 140000),
+            new("Vehicle.v_sport1_herrera_outlaw_player", "Herrera Outlaw", 200000),
+            new("Vehicle.v_sport1_rayfield_caliburn_player", "Rayfield Caliburn", 350000),
+        };
+    }
+
     public class Config
     {
         /// <summary>Money a brand-new character starts with.</summary>
@@ -129,6 +177,23 @@ namespace CharacterSystem
                 new("Ammo.HandgunAmmo", 100, false),
             },
         };
+
+        /// <summary>
+        /// Cyberware tiers, bought one after another at a ripperdoc. Each tier sets
+        /// how much cyberware a character can carry and the best quality of implant
+        /// they may install. Everyone starts at tier 1.
+        /// </summary>
+        public List<CyberwareTier> CyberwareTiers { get; set; } = new()
+        {
+            new() { Tier = 1, Capacity = 50, Price = 0, MaxQuality = "Common" },
+            new() { Tier = 2, Capacity = 90, Price = 10_000, MaxQuality = "Uncommon" },
+            new() { Tier = 3, Capacity = 140, Price = 30_000, MaxQuality = "Rare" },
+            new() { Tier = 4, Capacity = 200, Price = 75_000, MaxQuality = "Epic" },
+            new() { Tier = 5, Capacity = 280, Price = 150_000, MaxQuality = "Legendary" },
+        };
+
+        /// <summary>The car dealership: where it is and what it sells.</summary>
+        public Dealership Dealership { get; set; } = new();
 
         public static Config Load(string serverRoot, Action<string> logError)
         {

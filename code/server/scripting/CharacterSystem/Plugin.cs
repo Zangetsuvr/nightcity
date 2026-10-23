@@ -40,6 +40,9 @@ namespace CharacterSystem
             {
                 PushBalance = (id, balance) => Cyberpunk.Rpc.Client.Plugins.CharacterClient.SetBalance(id, balance),
                 PushProgress = (id, level, xp, next) => Cyberpunk.Rpc.Client.Plugins.CharacterClient.SetProgress(id, level, xp, next),
+                PushCyberware = (id, tier, capacity, quality, next) => Cyberpunk.Rpc.Client.Plugins.CharacterClient.SetCyberware(id, tier, capacity, quality, next),
+                PushShopData = (id, data) => Cyberpunk.Rpc.Client.Plugins.CharacterClient.ShopData(id, data),
+                PushVehicles = (id, records) => Cyberpunk.Rpc.Client.Plugins.CharacterClient.UnlockVehicles(id, records),
                 PushStarterKit = (id, kit) => Cyberpunk.Rpc.Client.Plugins.CharacterClient.GiveStarterKit(id, kit),
                 Notify = (id, message) => Server.PlayerSystem.GetById(id)?.SendChat("SERVER", message),
             };
@@ -105,6 +108,18 @@ namespace Cyberpunk.Rpc.Server.Plugins
         public static partial void RequestSync_Impl(ulong playerId)
         {
             CharacterSystem.Plugin.Instance.Characters.RequestedSync(playerId);
+        }
+
+        /// <summary>Move up one cyberware tier (from the ripperdoc screen).</summary>
+        public static partial void BuyCyberwareTier_Impl(ulong playerId)
+        {
+            CharacterSystem.Plugin.Instance.Characters.BuyCyberwareTier(playerId);
+        }
+
+        /// <summary>Buy a car at the dealership.</summary>
+        public static partial void BuyVehicle_Impl(ulong playerId, string record)
+        {
+            CharacterSystem.Plugin.Instance.Characters.BuyVehicle(playerId, record);
         }
 
         /// <summary>The player's game says which lifepath the character was made with.</summary>

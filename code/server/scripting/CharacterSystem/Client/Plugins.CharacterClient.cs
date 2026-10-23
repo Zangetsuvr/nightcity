@@ -69,5 +69,44 @@ public static class CharacterClient
 		}
 	}
 
+	[ClientRpc(Class = 12420467711440894951, Function = 16104243853683790762)]
+	public static void SetCyberware(ulong playerId, int tier, int capacity, int maxQuality, int nextPrice)
+	{
+		var data = IBuffer.Create();
+		try{
+			data.WriteInt32(tier);
+			data.WriteInt32(capacity);
+			data.WriteInt32(maxQuality);
+			data.WriteInt32(nextPrice);
+			CyberpunkSdk.Server.RpcManager.Call(playerId, 12420467711440894951, 16104243853683790762, data);
+		} finally {
+			IBuffer.Release(data);
+		}
+	}
+
+	[ClientRpc(Class = 12420467711440894951, Function = 9858357444041780407)]
+	public static void ShopData(ulong playerId, string payload)
+	{
+		var data = IBuffer.Create();
+		try{
+			data.WriteString(payload);
+			CyberpunkSdk.Server.RpcManager.Call(playerId, 12420467711440894951, 9858357444041780407, data);
+		} finally {
+			IBuffer.Release(data);
+		}
+	}
+
+	[ClientRpc(Class = 12420467711440894951, Function = 9089798231291088960)]
+	public static void UnlockVehicles(ulong playerId, string records)
+	{
+		var data = IBuffer.Create();
+		try{
+			data.WriteString(records);
+			CyberpunkSdk.Server.RpcManager.Call(playerId, 12420467711440894951, 9089798231291088960, data);
+		} finally {
+			IBuffer.Release(data);
+		}
+	}
+
 }
 }
