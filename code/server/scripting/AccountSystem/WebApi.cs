@@ -178,7 +178,9 @@ internal class AccountController : PluginWebApiController
         HttpContext.Response.ContentType = "application/octet-stream";
         HttpContext.Response.ContentLength64 = new FileInfo(full).Length;
         await using var source = File.OpenRead(full);
-        await using var target = HttpContext.OpenResponseStream();
+        // No compression: the length is announced up front, and a compressed
+        // body wouldn't match it, so the launcher would see the download cut off.
+        await using var target = HttpContext.OpenResponseStream(buffered: false, preferCompression: false);
         await source.CopyToAsync(target);
     }
 
