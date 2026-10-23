@@ -457,6 +457,9 @@ public class MpJobBoard extends ScriptableSystem {
         let scale = size.X > 1.0 ? size.X / 1920.0 : 2.0;
         let offsetY = size.Y > 1.0 ? (size.Y - 1080.0 * scale) / 2.0 : 0.0;
         this.m_canvas.SetMargin(new inkMargin(0.0, offsetY, 0.0, 0.0));
+        // Scale from the top-left corner, not the middle (the default), or the
+        // whole board slides up and to the left off the screen.
+        this.m_canvas.SetRenderTransformPivot(new Vector2(0.0, 0.0));
         this.m_canvas.SetScale(new Vector2(scale, scale));
         this.m_canvas.RemoveAllChildren();
 
