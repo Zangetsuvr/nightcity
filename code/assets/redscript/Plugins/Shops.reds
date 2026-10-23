@@ -130,6 +130,12 @@ private final func EquipCyberware(itemData: wref<gameItemData>) -> Bool {
         if rank > cyberware.m_maxQuality {
             MpJobMessage("Your cyberware tier (" + IntToString(cyberware.m_tier) + ") only allows " + cyberware.QualityName(cyberware.m_maxQuality)
                 + " implants. Upgrade your tier to install this one.");
+            // Leave the screen the way the game does after a refused install;
+            // otherwise it thinks a confirmation is still open and won't close.
+            this.m_hoverArea = gamedataEquipmentArea.Invalid;
+            this.m_isPurchaseEquip = false;
+            this.m_isInEquipPopup = false;
+            this.m_audioSystem.Play(n"ui_menu_attributes_fail");
             return false;
         }
     }
