@@ -449,6 +449,7 @@ void NetworkWorldSystem::OnInitialize(const RED4ext::JobHandle& aJob)
 void NetworkWorldSystem::Connect()
 {
     auto address = fmt::format("{}:{}", Settings::Get().ip, Settings::Get().port);
+    spdlog::info("[NetworkWorldSystem] Connecting to '{}'", address);
     Core::Container::Get<NetworkService>()->Connect(address);
 }
 
