@@ -100,7 +100,9 @@ protected cb func OnInitialize() -> Bool {
 
 @addMethod(DifficultySelectionMenu)
 public func MpChooseDifficulty() -> Void {
-    this.SetDifficulty(gameDifficulty.Easy);
+    // gameDifficulty.Easy is the second option on the screen ("Normal").
+    GameInstance.GetStatsDataSystem(GetGameInstance()).SetDifficulty(gameDifficulty.Easy);
+    this.NextMenu();
 }
 
 @wrapMethod(CharacterCreationBackstorySelectionMenu)
