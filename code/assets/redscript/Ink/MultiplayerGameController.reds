@@ -792,6 +792,24 @@ public class MultiplayerGameController extends inkGameController {
         board.Open(this);
     }
 
+    // The admin panel (Ink/AdminPanelUI.reds), opened by the server's answer to /admin.
+    public final func OpenAdminPanel() -> Void {
+        let panel = MpAdminPanel.Get();
+        let board = MpJobBoard.Get();
+        if !IsDefined(panel) || panel.IsOpen() || (IsDefined(board) && board.IsOpen()) {
+            return;
+        }
+        this.m_uiSystem.PushGameContext(UIGameContext.ModalPopup);
+        this.m_uiSystem.RequestNewVisualState(n"inkModalPopupState");
+        PopupStateUtils.SetBackgroundBlur(this, true);
+        this.m_audioSystem.Play(n"ui_phone_incoming_call_positive");
+        let blackboardSystem: ref<BlackboardSystem> = GameInstance.GetBlackboardSystem(GetGameInstance());
+        let uiBlackboard: ref<IBlackboard> = blackboardSystem.Get(GetAllBlackboardDefs().UIGameData);
+        uiBlackboard.SetBool(GetAllBlackboardDefs().UIGameData.UIMultiplayerContextRequest, true, true);
+        this.EnableServerInput();
+        panel.Open(this);
+    }
+
     public final func OnJobBoardClosed() -> Void {
         this.DisableServerInput();
         this.m_audioSystem.Play(n"ui_phone_incoming_call_negative");
@@ -1000,6 +1018,14 @@ public class MultiplayerGameController extends inkGameController {
                 };
             }
         } else {
+            let admin = MpAdminPanel.Get();
+            if IsDefined(admin) && admin.IsOpen() {
+                if Equals(actionName, n"OpenPauseMenu") {
+                    ListenerActionConsumer.DontSendReleaseEvent(consumer);
+                    return true;
+                }
+                return admin.HandleAction(actionName, Equals(actionType, gameinputActionType.BUTTON_PRESSED));
+            }
             let board = MpJobBoard.Get();
             if IsDefined(board) && board.IsOpen() {
                 if Equals(actionName, n"OpenPauseMenu") {

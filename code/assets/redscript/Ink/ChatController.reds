@@ -124,6 +124,16 @@ public class ChatController extends inkHUDGameController {
 
     private final func SendChat() -> Void {
         let textEntered: String = this.m_input.GetText();
+        if Equals(textEntered, "/admin") {
+            AdminServer.OpenPanel();
+            return;
+        }
+        if StrBeginsWith(textEntered, "/addplace ") {
+            let place = StrAfterFirst(textEntered, " ");
+            let here = GetPlayer(GetGameInstance()).GetWorldPosition();
+            AdminServer.AddPlace(place, here.X, here.Y, here.Z);
+            return;
+        }
         if Equals(textEntered, "/where") {
             // Your position, for setting places in the server's config (dealership...).
             let p = GetPlayer(GetGameInstance()).GetWorldPosition();
