@@ -96,6 +96,20 @@ export default function ServerPanel ({ address, gamePath, onSelectGame, onBack, 
     return api().onProgress((update: Progress) => setProgress(update))
   }, [load])
 
+  // Keep the player count (and the rest of the server info) current while the
+  // launcher is open, including while you're in the game.
+  useEffect(() => {
+    const timer = setInterval(() => {
+      api().info(address).then((result: Result<ServerInfo>) => {
+        if (result.ok && result.value) {
+          const value = result.value
+          setInfo(value)
+        }
+      }).catch(() => {})
+    }, 15000)
+    return () => clearInterval(timer)
+  }, [address])
+
   const run = async (label: string, action: () => Promise<void>) => {
     setBusy(label)
     setError(null)
