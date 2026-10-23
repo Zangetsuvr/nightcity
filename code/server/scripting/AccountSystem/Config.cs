@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 
 namespace AccountSystem
 {
@@ -77,6 +77,7 @@ namespace AccountSystem
             "red4ext",
             "r6/scripts",
             "r6/tweaks",
+            "r6/config/redsUserHints",
             "mods",
         };
 
@@ -92,7 +93,40 @@ namespace AccountSystem
             "bin/x64/dxgi.dll",
             "bin/x64/dinput8.dll",
             "bin/x64/global.ini",
+            // redscript (the script compiler that replaces the game's own)
+            "engine/tools/scc.exe",
+            "engine/tools/scc_lib.dll",
+            "engine/config/base/scripts.ini",
+            "r6/config/cybercmd/scc.toml",
+            // Input Loader
+            "engine/config/platform/pc/input_loader.ini",
+            "r6/cache/inputContexts.xml",
+            "r6/cache/inputUserMappings.xml",
         };
+
+        // Entries every server needs for the multiplayer mod's own requirements.
+        // Added to older account.json files that were written before they existed.
+        private static readonly string[] RequiredRoots = { "r6/config/redsUserHints" };
+        private static readonly string[] RequiredFiles =
+        {
+            "engine/tools/scc.exe",
+            "engine/tools/scc_lib.dll",
+            "engine/config/base/scripts.ini",
+            "r6/config/cybercmd/scc.toml",
+            "engine/config/platform/pc/input_loader.ini",
+            "r6/cache/inputContexts.xml",
+            "r6/cache/inputUserMappings.xml",
+        };
+
+        private void AddRequiredEntries()
+        {
+            foreach (var root in RequiredRoots)
+                if (!ModRoots.Contains(root, StringComparer.OrdinalIgnoreCase))
+                    ModRoots.Add(root);
+            foreach (var file in RequiredFiles)
+                if (!ModFiles.Contains(file, StringComparer.OrdinalIgnoreCase))
+                    ModFiles.Add(file);
+        }
 
         /// <summary>
         /// Files mods create while running (logs, settings, caches). Ignored on
@@ -124,7 +158,10 @@ namespace AccountSystem
                 {
                     var loaded = JsonSerializer.Deserialize<Config>(File.ReadAllText(path));
                     if (loaded != null)
+                    {
+                        loaded.AddRequiredEntries();
                         return loaded;
+                    }
                 }
 
                 var defaults = new Config();

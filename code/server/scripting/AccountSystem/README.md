@@ -68,8 +68,13 @@ those folders from it. After changing the modpack, restart the server or call
 downloads files that changed.
 
 **What counts as a mod:** everything under `archive/pc/mod`, `bin/x64/plugins`, `red4ext`,
-`r6/scripts`, `r6/tweaks` and `mods`, plus the loader files `bin/x64/version.dll`, `winmm.dll`,
-`d3d11.dll`, `dxgi.dll`, `dinput8.dll` and `global.ini`. **Ignored:** log files, CET settings
+`r6/scripts`, `r6/tweaks`, `r6/config/redsUserHints` and `mods`, plus the loader files
+`bin/x64/version.dll`, `winmm.dll`, `d3d11.dll`, `dxgi.dll`, `dinput8.dll` and `global.ini`, and the
+files redscript and Input Loader put outside those folders (`engine/tools/scc.exe`,
+`engine/tools/scc_lib.dll`, `engine/config/base/scripts.ini`, `r6/config/cybercmd/scc.toml`,
+`engine/config/platform/pc/input_loader.ini`, `r6/cache/inputContexts.xml`,
+`r6/cache/inputUserMappings.xml`). Those last ones are added to older `account.json` files
+automatically. **Ignored:** log files, CET settings
 files, mod databases (`*.sqlite3`), and CyberpunkMP's `session.json` and `Rpc` folder, which
 mods create while running. Both lists are in `config/account.json` (`ModRoots`, `ModFiles`,
 `Ignore`). Keep `Ignore` short, since anything ignored could hide a mod.
