@@ -1,0 +1,64 @@
+{
+  "name": "CyberpunkMP",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "type": "module",
+  "scripts": {
+    "test": "node test/modpack.test.mjs && node test/discord-login.test.mjs && node test/servers.test.mjs",
+    "start:electron": "cross-env ELECTRON_DEV=1 ow-electron .",
+    "build:electron": "ow-electron-builder --publish=never"
+  },
+  "author": {
+    "name": "Tilted Phoques SRL"
+  },
+  "productName": "CyberpunkMP",
+  "build": {
+    "productName": "CyberpunkMP",
+    "includeSubNodeModules": "true",
+    "directories": {
+      "output": "out"
+    },
+    "extraFiles": [
+      "./dist/**",
+      "./preload.mjs"
+    ],
+    "files": [
+      "./dist/**/*",
+      "./app.js",
+      "./preload.mjs",
+      "./modpack.js",
+      "./server-api.js",
+      "./discord-login.js",
+      "./game.js",
+      "./launcher-config.json",
+      "./server-launcher.js",
+      "./servers.js",
+      "./presence.js"
+    ],
+    "extraResources": [
+      "./preload.mjs",
+      "./launcher-config.json"
+    ]
+  },
+  "private": true,
+  "devDependencies": {
+    "@overwolf/ow-electron": "^31.7.3",
+    "@overwolf/ow-electron-builder": "^25.0.6",
+    "electron-devtools-installer": "^3.2.0",
+    "react-devtools": "^6.0.1"
+  },
+  "dependencies": {
+    "decompress": "^4.2.1",
+    "electron-store": "^10.0.0",
+    "readable-stream": "^4.5.2",
+    "@xhayper/discord-rpc": "^1.2.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@overwolf/ow-electron",
+      "electron",
+      "esbuild"
+    ]
+  }
+}
