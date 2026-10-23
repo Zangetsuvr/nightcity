@@ -35,22 +35,30 @@ jobs:
       - name: Build
         shell: pwsh
         run: |
-          pnpm config set virtual-store-dir-max-length 50
+          $log = Join-Path $env:GITHUB_WORKSPACE "launcher-log.txt"
+          function Run($what, [scriptblock]$cmd) {
+            "===== $what =====" | Tee-Object -FilePath $log -Append
+            & $cmd *>&1 | Tee-Object -FilePath $log -Append
+            if ($LASTEXITCODE -ne 0) { "===== FAILED: $what (exit $LASTEXITCODE) =====" | Tee-Object -FilePath $log -Append; exit 1 }
+          }
+          Run "pnpm config" { pnpm config set virtual-store-dir-max-length 50 }
           Set-Location code/launcher
-          pnpm install --frozen-lockfile=false
-          pnpm run build
+          Run "install (ui)" { pnpm install --frozen-lockfile=false }
+          Run "build (ui)" { pnpm run build }
           Set-Location electron
-          pnpm run build:electron
+          Run "build (electron)" { pnpm run build:electron }
 
       - name: Publish installer
+        if: always()
         shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           $out = Join-Path $env:RUNNER_TEMP "launcher-output"
           New-Item -ItemType Directory -Force $out | Out-Null
-          Get-ChildItem code/launcher/electron/out -Filter *.exe | Copy-Item -Destination $out
-          "run $env:GITHUB_RUN_ID, commit $env:GITHUB_SHA" | Set-Content (Join-Path $out "STATUS.txt")
+          if (Test-Path code/launcher/electron/out) { Get-ChildItem code/launcher/electron/out -Filter *.exe | Copy-Item -Destination $out }
+          if (Test-Path launcher-log.txt) { Copy-Item launcher-log.txt $out }
+          "run $env:GITHUB_RUN_ID, commit $env:GITHUB_SHA, status ${{ job.status }}" | Set-Content (Join-Path $out "STATUS.txt")
           Set-Location $out
           git init -q -b launcher-output
           git config user.name "ci"
