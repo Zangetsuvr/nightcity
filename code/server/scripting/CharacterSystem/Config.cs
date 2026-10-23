@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 
 namespace CharacterSystem
 {
@@ -6,6 +6,15 @@ namespace CharacterSystem
     /// Settings read from config/character.json next to the server.
     /// The file is created with these defaults the first time the server starts.
     /// </summary>
+    /// <summary>A place in the world: position in metres and facing (degrees).</summary>
+    public class StartPoint
+    {
+        public float X { get; set; } = -1720.4f;
+        public float Y { get; set; } = -1956.6f;
+        public float Z { get; set; } = 62.4f;
+        public float Yaw { get; set; } = 0f;
+    }
+
     public class Config
     {
         /// <summary>Money a brand-new character starts with.</summary>
@@ -57,6 +66,14 @@ namespace CharacterSystem
         /// X-Admin-Key header). Empty means changes through the API are switched off.
         /// </summary>
         public string AdminKey { get; set; } = "";
+
+        /// <summary>
+        /// Where brand-new characters arrive. New characters start in a holding room
+        /// (the clean start skips the story), and the server moves them here the
+        /// first time they connect. Returning characters stay where they saved.
+        /// Null = leave new characters where the game put them.
+        /// </summary>
+        public StartPoint? Start { get; set; } = new();
 
         public static Config Load(string serverRoot, Action<string> logError)
         {

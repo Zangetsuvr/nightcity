@@ -154,9 +154,17 @@ export function registerServerLauncher ({ electron, store, getWindow, configDir 
 
     // The character name comes from the save (named in the game's character
     // creator); the session carries the login and where the server is.
+    // Which characters this account has decides where the game goes from the
+    // main menu: straight into the newest save, or a New Game to make one.
+    let characters = session.characters || []
+    try {
+      characters = (await api.me(session.token)).Characters || characters
+    } catch {}
+
     await writeSession(gameRoot, config.sessionFile, {
       token: `${session.token}:${fingerprint}`,
-      apiUrl: apiUrl({ host, port })
+      apiUrl: apiUrl({ host, port }),
+      characters
     })
 
     playing = { key, info, startedAt: new Date() }

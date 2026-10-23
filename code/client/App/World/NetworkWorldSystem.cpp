@@ -20,6 +20,7 @@
 
 #include "ChatSystem.h"
 #include "App/Network/NameService.h"
+#include "App/Network/Session.h"
 
 static uint64_t GTick = 0;
 
@@ -532,6 +533,23 @@ void NetworkWorldSystem::OnDisconnected(Client::EDisconnectReason aReason)
 bool NetworkWorldSystem::HasServerSession() const
 {
     return NameService::Get().HasSession();
+}
+
+bool NetworkWorldSystem::IsConnected() const
+{
+    return Core::Container::Get<NetworkService>()->IsConnected();
+}
+
+int32_t NetworkWorldSystem::GetAccountCharacterCount() const
+{
+    const auto session = Session::Read();
+    return session ? static_cast<int32_t>(session->Characters.size()) : 0;
+}
+
+bool NetworkWorldSystem::TakeAutoStart()
+{
+    static std::atomic_bool s_taken{false};
+    return !s_taken.exchange(true);
 }
 
 void NetworkWorldSystem::RequestNameCheck(const Red::CString& aName)

@@ -1,4 +1,4 @@
-namespace CharacterSystem.Store
+﻿namespace CharacterSystem.Store
 {
     /// <summary>
     /// Everything we keep about a character between sessions.
@@ -28,6 +28,9 @@ namespace CharacterSystem.Store
         /// <summary>A frozen wallet can't earn, spend or transfer until an admin unfreezes it.</summary>
         public bool Frozen { get; set; }
         public string? FrozenReason { get; set; }
+
+        /// <summary>Set once the character has been moved to the start point after creation.</summary>
+        public bool SpawnedBefore { get; set; }
 
         public long GetXp(string track) => Xp.TryGetValue(track, out var v) ? v : 0;
     }

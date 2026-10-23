@@ -18,6 +18,12 @@ std::optional<Session> Session::Read()
         session.ApiUrl = json.value("apiUrl", std::string{});
         session.Token = json.value("token", std::string{});
         session.SessionToken = session.Token.substr(0, session.Token.find(':'));
+        if (json.contains("characters") && json["characters"].is_array())
+        {
+            for (const auto& name : json["characters"])
+                if (name.is_string())
+                    session.Characters.push_back(name.get<std::string>());
+        }
 
         while (!session.ApiUrl.empty() && session.ApiUrl.back() == '/')
             session.ApiUrl.pop_back();

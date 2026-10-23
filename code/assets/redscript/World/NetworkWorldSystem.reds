@@ -10,6 +10,9 @@ public native class NetworkWorldSystem extends IGameSystem {
 
     // Character names (see Plugins/CharacterName.reds).
     public native func HasServerSession() -> Bool;
+    public native func IsConnected() -> Bool;
+    public native func TakeAutoStart() -> Bool;
+    public native func GetAccountCharacterCount() -> Int32;
     public native func RequestNameCheck(name: String) -> Void;
     public native func RequestNameReserve(name: String) -> Void;
     public native func GetNameStatus() -> Int32;
@@ -36,7 +39,11 @@ public native class NetworkWorldSystem extends IGameSystem {
         let blackboard: ref<IBlackboard> = blackboardSystem.Get(GetAllBlackboardDefs().UIGameData);
         blackboard.SetBool(GetAllBlackboardDefs().UIGameData.UIMultiplayerConnectedToServer, true, true);
 
-        // Get this character's saved balance and progress from the server.
+        // Story calls stay closed while on the server (see Plugins/Quests.reds).
+        MpSilenceStoryHolocalls();
+
+        // Get this character's saved balance and progress from the server
+        // (and, for a brand-new character, be moved to the start point).
         CharacterServer.RequestSync();
     }
 

@@ -39,7 +39,8 @@ Get-ChildItem $scripts -Recurse -Filter *.reds | ForEach-Object {
 
 $archives = Join-Path $dest "assets\Archives"
 New-Item -ItemType Directory -Force $archives | Out-Null
-Copy-Item (Join-Path $root "code\assets\Archives\packed\archive\pc\mod\CyberpunkMP.archive") $archives
+# Every archive here: CyberpunkMP.archive, plus the clean start (no prologue, no story).
+Get-ChildItem (Join-Path $root "code\assets\Archives\packed\archive\pc\mod") -Filter *.archive | Copy-Item -Destination $archives
 
 $inputs = Join-Path $dest "assets\Inputs"
 New-Item -ItemType Directory -Force $inputs | Out-Null

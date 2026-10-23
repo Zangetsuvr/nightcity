@@ -44,6 +44,11 @@ struct NetworkWorldSystem : RED4ext::IGameSystem, Core::HookingAgent, flecs::wor
 
     // Character names (see App/Network/NameService.h and Plugins/CharacterName.reds).
     bool HasServerSession() const;
+    bool IsConnected() const;
+    // True once per game launch: the main menu uses it to go straight into the
+    // game when started from the launcher, but only the first time it opens.
+    bool TakeAutoStart();
+    int32_t GetAccountCharacterCount() const;
     void RequestNameCheck(const Red::CString& aName);
     void RequestNameReserve(const Red::CString& aName);
     int32_t GetNameStatus() const;
@@ -89,6 +94,9 @@ RTTI_DEFINE_CLASS(NetworkWorldSystem, {
     RTTI_METHOD(Connect);
     RTTI_METHOD(Disconnect);
     RTTI_METHOD(HasServerSession);
+    RTTI_METHOD(IsConnected);
+    RTTI_METHOD(TakeAutoStart);
+    RTTI_METHOD(GetAccountCharacterCount);
     RTTI_METHOD(RequestNameCheck);
     RTTI_METHOD(RequestNameReserve);
     RTTI_METHOD(GetNameStatus);

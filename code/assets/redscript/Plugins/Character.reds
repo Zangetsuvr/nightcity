@@ -62,6 +62,17 @@ public class CharacterClient extends ClientRpc {
         }
     }
 
+    // Move the player (the server does this once for a brand-new character,
+    // out of the clean start's holding room to the server's start point).
+    public func Teleport(x: Float, y: Float, z: Float, yaw: Float) -> Void {
+        let game = GetGameInstance();
+        let player = GetPlayer(game);
+        if !IsDefined(player) {
+            return;
+        }
+        GameInstance.GetTeleportationFacility(game).Teleport(player, new Vector4(x, y, z, 1.0), new EulerAngles(0.0, 0.0, yaw));
+    }
+
     // Street Cred level and XP from the server, kept for UI to read later.
     public func SetProgress(level: Int32, xp: Int64, nextLevelXp: Int64) -> Void {
         let state = CharacterState.Get(GetGameInstance());

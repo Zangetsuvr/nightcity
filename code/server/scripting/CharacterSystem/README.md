@@ -99,6 +99,7 @@ somewhere safe, ideally on a schedule. While the server is running, the safest w
 | EarningsLimitPerHour | 250,000 | Refuse payouts past this per hour (0 = off) |
 | FreezeOnEarningsLimit | false | Also freeze the wallet when the hard limit is hit |
 | AdminKey | (empty) | Secret for the admin API's changes and flags; empty = off |
+| Start | X -1720.4, Y -1956.6, Z 62.4, Yaw 0 | Where brand-new characters are moved the first time they connect (out of the clean start's holding room). `null` = leave them where the game put them |
 
 ## Admin API
 

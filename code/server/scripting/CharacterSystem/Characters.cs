@@ -1,4 +1,4 @@
-using CharacterSystem.Store;
+﻿using CharacterSystem.Store;
 using CyberpunkSdk;
 
 namespace CharacterSystem
@@ -307,8 +307,29 @@ namespace CharacterSystem
         /// <summary>A sync the player's game asked for. Limited to one every 2 seconds.</summary>
         public void RequestedSync(ulong playerId)
         {
-            if (_security.AllowCall(playerId, "sync", 2))
-                Sync(playerId);
+            if (!_security.AllowCall(playerId, "sync", 2))
+                return;
+            PlaceIfNew(playerId);
+            Sync(playerId);
+        }
+
+        /// <summary>
+        /// The game asks for a sync once it's connected and standing in the world.
+        /// A character that has never been placed is moved to the start point then,
+        /// out of the holding room a clean New Game leaves them in. Happens once.
+        /// </summary>
+        private void PlaceIfNew(ulong playerId)
+        {
+            var start = _config.Start;
+            var key = KeyOf(playerId);
+            if (start == null || key == null)
+                return;
+
+            if (_store.Read(key, r => r.SpawnedBefore))
+                return;
+
+            if (_store.Modify(key, r => { r.SpawnedBefore = true; return true; }))
+                Cyberpunk.Rpc.Client.Plugins.CharacterClient.Teleport(playerId, start.X, start.Y, start.Z, start.Yaw);
         }
 
         /// <summary>Locks or unlocks a character's money (admin).</summary>
