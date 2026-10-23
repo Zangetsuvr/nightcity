@@ -204,7 +204,7 @@ export default function ServerPanel ({ address, gamePath, onSelectGame, onBack, 
         {session && (
           <>
             <button className="enter" onClick={() => { void play() }} disabled={busy !== null || !gamePath}>
-              {playing ? 'In the city' : 'Enter Night City'}
+              {playing ? (progress?.step === 'playing' ? 'In the city' : 'Getting ready…') : 'Enter Night City'}
             </button>
             {session.characters.length === 0 && !playing && (
               <Box sx={{ mt: 1.5, fontSize: 14, color: 'text.secondary', lineHeight: 1.5 }}>
