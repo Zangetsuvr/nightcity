@@ -35,6 +35,22 @@ namespace CyberpunkSdk
         void SetSavedJob(ulong playerId, string? job);
     }
 
+    /// <summary>Players who flatlined and are waiting for a medic or the hospital.</summary>
+    public interface IMedical
+    {
+        bool IsDowned(ulong playerId);
+
+        /// <summary>Gets a downed player up where they are (a medic or an admin got to them).</summary>
+        bool ReviveInPlace(ulong playerId, string by);
+    }
+
+    /// <summary>Service calls (Trauma Team, NCPD, mechanic) made for a player.</summary>
+    public interface IDispatch
+    {
+        /// <summary>Calls a service to the player's position. Automatic calls skip the cooldown.</summary>
+        void CallService(ulong playerId, string serviceId, bool automatic);
+    }
+
     /// <summary>
     /// Lets plugins use each other without referencing each other's assemblies.
     /// CharacterSystem fills these in when it loads; other plugins should treat
@@ -44,5 +60,11 @@ namespace CyberpunkSdk
     {
         public static IEconomy? Economy { get; set; }
         public static IProgression? Progression { get; set; }
+
+        /// <summary>Downed players (CharacterSystem).</summary>
+        public static IMedical? Medical { get; set; }
+
+        /// <summary>Calls for player services such as Trauma Team (JobSystem).</summary>
+        public static IDispatch? Dispatch { get; set; }
     }
 }

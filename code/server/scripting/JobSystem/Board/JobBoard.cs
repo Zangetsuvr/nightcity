@@ -348,7 +348,13 @@ namespace JobSystem.Board
 
         // ---------------------------------------------------------------- calls from players
 
-        public static void CallService(ulong playerId, string serviceId)
+        public static void CallService(ulong playerId, string serviceId) => CallService(playerId, serviceId, false);
+
+        /// <summary>
+        /// A call for a player. Automatic calls (Trauma Team for someone who just
+        /// flatlined) skip the cooldown, and go away once the patient is back up.
+        /// </summary>
+        public static void CallService(ulong playerId, string serviceId, bool automatic)
         {
             var def = JobCatalog.Jobs.FirstOrDefault(j => j.Service != null && string.Equals(j.Service.Id, serviceId, StringComparison.OrdinalIgnoreCase));
             var player = Server.PlayerSystem.GetById(playerId);
@@ -358,7 +364,7 @@ namespace JobSystem.Board
 
             lock (Lock)
             {
-                if (LastCall.TryGetValue((playerId, service.Id), out var last) && (DateTime.UtcNow - last).TotalSeconds < CallCooldownSeconds)
+                if (!automatic && LastCall.TryGetValue((playerId, service.Id), out var last) && (DateTime.UtcNow - last).TotalSeconds < CallCooldownSeconds)
                 {
                     player.SendChat("JOB", "You called recently. Give it a couple of minutes.");
                     return;
@@ -388,7 +394,13 @@ namespace JobSystem.Board
                 CallerId = playerId,
                 CallerPays = service.CallerPays,
                 RepairsVehicle = service.RepairsVehicle,
+                ForDowned = automatic,
             };
+            if (automatic)
+            {
+                contract.Title = $"{player.Username} is down";
+                contract.Detail = "A player flatlined. Get to them and treat them before they give up and go to the hospital.";
+            }
             contract.Stages.Add(new Stage
             {
                 Label = $"Reach {player.Username}",
@@ -412,9 +424,14 @@ namespace JobSystem.Board
             foreach (var id in responders)
                 Server.PlayerSystem.GetById(id)?.SendChat("JOB", $"New call from {player.Username}. Open the job board to take it.");
 
+            if (automatic)
+            {
+                foreach (var id in responders)
+                    Server.PlayerSystem.GetById(id)?.SendChat("JOB", $"{player.Username} is down and needs a medic.");
+            }
             player.SendChat("JOB", responders.Count > 0
-                ? $"Call sent. {responders.Count} {def.Name} on duty. Stay where you are."
-                : $"Call sent, but nobody's on duty as {def.Name} right now. It stays open for 10 minutes.");
+                ? (automatic ? $"Trauma Team has been called. {responders.Count} medic(s) on duty." : $"Call sent. {responders.Count} {def.Name} on duty. Stay where you are.")
+                : (automatic ? "Trauma Team has been called, but no medics are on duty right now." : $"Call sent, but nobody's on duty as {def.Name} right now. It stays open for 10 minutes."));
         }
 
         /// <summary>A responder dropped a player's call: put it back for someone else.</summary>
@@ -441,7 +458,8 @@ namespace JobSystem.Board
                     list.RemoveAll(c =>
                     {
                         var expired = (DateTime.UtcNow - c.CreatedUtc).TotalSeconds > CallLifetimeSeconds;
-                        var gone = Server.PlayerSystem.GetById(c.CallerId) == null;
+                        var gone = Server.PlayerSystem.GetById(c.CallerId) == null
+                                   || (c.ForDowned && GameServices.Medical != null && !GameServices.Medical.IsDowned(c.CallerId));
                         if (expired && !gone)
                             Server.PlayerSystem.GetById(c.CallerId)?.SendChat("JOB", "Nobody took your call. Try again later.");
                         return expired || gone;
@@ -455,5 +473,15 @@ namespace JobSystem.Board
         /// <summary>Fields joined with '~'; the separators can't appear inside a field.</summary>
         private static string Record(params string[] fields) =>
             string.Join("~", fields.Select(f => (f ?? "").Replace("~", "-").Replace("^", "-")));
+    }
+}
+
+namespace JobSystem.Board
+{
+    /// <summary>Service calls other plugins make for a player (GameServices.Dispatch).</summary>
+    internal sealed class Dispatch : CyberpunkSdk.IDispatch
+    {
+        public void CallService(ulong playerId, string serviceId, bool automatic) =>
+            JobBoard.CallService(playerId, serviceId, automatic);
     }
 }

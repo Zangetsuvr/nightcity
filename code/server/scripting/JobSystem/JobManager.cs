@@ -52,6 +52,9 @@ namespace JobSystem
                 logger.Info("\tRegistered job " + def.Name);
             }
 
+            // Lets the character plugin call Trauma Team for someone who flatlined.
+            GameServices.Dispatch = new Board.Dispatch();
+
             Server.Timer.Add(Save, 300.0f);
             Server.Timer.Add(HeavyUpdate, 0.5f);
         }

@@ -234,7 +234,9 @@ namespace AccountSystem
             var target = Online(character);
             if (me == null || target == null)
                 return;
-            Cyberpunk.Rpc.Client.Plugins.AdminClient.Heal(target.Id, $"Healed by an admin.");
+            // A downed player is got up properly (ends their downed state too).
+            if (GameServices.Medical == null || !GameServices.Medical.ReviveInPlace(target.Id, "An admin"))
+                Cyberpunk.Rpc.Client.Plugins.AdminClient.Heal(target.Id, $"Healed by an admin.");
             Log(me, $"healed {character}");
         }
 

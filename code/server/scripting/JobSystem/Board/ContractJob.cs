@@ -49,6 +49,9 @@ namespace JobSystem.Board
         public bool RepairsVehicle;
         public DateTime CreatedUtc = DateTime.UtcNow;
 
+        /// <summary>Called automatically for a flatlined player: finishing it gets them up.</summary>
+        public bool ForDowned;
+
         public bool IsPlayerCall => CallerId != 0;
     }
 
@@ -272,8 +275,18 @@ namespace JobSystem.Board
             }
             else
             {
+                // A downed patient the medic reached in time gets up. One who
+                // already went to the hospital isn't worth paying for.
+                var revived = contract.ForDowned && GameServices.Medical != null
+                    && GameServices.Medical.ReviveInPlace(contract.CallerId, player?.Username ?? "a medic");
+                if (contract.ForDowned && !revived)
+                {
+                    player?.SendChat("JOB", "Your patient had already gone to the hospital.");
+                    Cyberpunk.Rpc.Client.Plugins.JobBoardClient.ClearObjective(Id, "Your patient had already gone to the hospital.");
+                    return;
+                }
                 paid = pay > 0 && economy != null && economy.Credit(Id, pay, $"{Def.Name}: {contract.Title}");
-                if (contract.IsPlayerCall)
+                if (contract.IsPlayerCall && !contract.ForDowned)
                     Server.PlayerSystem.GetById(contract.CallerId)?.SendChat("JOB", $"Your {Def.Name} responder has finished.");
             }
 

@@ -14,6 +14,18 @@ namespace Cyberpunk.Rpc.Client.Plugins
 {
 public static class MedicalClient
 {
+	[ClientRpc(Class = 13133010667665770435, Function = 570266048736227921)]
+	public static void SetDowned(ulong playerId, int seconds)
+	{
+		var data = IBuffer.Create();
+		try{
+			data.WriteInt32(seconds);
+			CyberpunkSdk.Server.RpcManager.Call(playerId, 13133010667665770435, 570266048736227921, data);
+		} finally {
+			IBuffer.Release(data);
+		}
+	}
+
 	[ClientRpc(Class = 13133010667665770435, Function = 7004291323086412388)]
 	public static void Revive(ulong playerId, float x, float y, float z, string note)
 	{

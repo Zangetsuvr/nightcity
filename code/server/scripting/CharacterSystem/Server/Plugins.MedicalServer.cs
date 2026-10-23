@@ -14,18 +14,28 @@ namespace Cyberpunk.Rpc.Server.Plugins
 {
 public static partial class MedicalServer
 {
-	[ServerRpc(Class = 16363141439897414967, Function = 8222670623872172948)]
-	public static void Flatlined(ulong playerId, IBuffer data)
+	[ServerRpc(Class = 16363141439897414967, Function = 17896935948930381692)]
+	public static void Downed(ulong playerId, IBuffer data)
 	{
 		ushort length = 0;
 		var x = data.ReadFloat();
 		var y = data.ReadFloat();
 		var z = data.ReadFloat();
 
-		Flatlined_Impl(playerId, x, y, z);
+		Downed_Impl(playerId, x, y, z);
 	}
 
-	public static partial void Flatlined_Impl(ulong playerId, float x, float y, float z);
+	public static partial void Downed_Impl(ulong playerId, float x, float y, float z);
+
+	[ServerRpc(Class = 16363141439897414967, Function = 300826383464532580)]
+	public static void GoToHospital(ulong playerId, IBuffer data)
+	{
+		ushort length = 0;
+
+		GoToHospital_Impl(playerId);
+	}
+
+	public static partial void GoToHospital_Impl(ulong playerId);
 
 }
 }

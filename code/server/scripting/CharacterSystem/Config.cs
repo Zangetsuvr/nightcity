@@ -95,6 +95,9 @@ namespace CharacterSystem
         /// <summary>Trauma bill for each flatline. Taken from what you have; never puts you below zero.</summary>
         public long Bill { get; set; } = 250;
 
+        /// <summary>How long a flatlined player stays down (waiting for Trauma Team) before they can choose the hospital.</summary>
+        public int DownedSeconds { get; set; } = 180;
+
         public List<Hospital> Hospitals { get; set; } = new();
     }
 
@@ -228,8 +231,9 @@ namespace CharacterSystem
 
         /// <summary>
         /// Flatlining on the server: instead of the game's death screen (which
-        /// reloads a save and drops you off the server), you wake up at the nearest
-        /// hospital, healed, minus the bill. Stand at a clinic, type /where in chat,
+        /// reloads a save and drops you off the server), you go down and Trauma
+        /// Team is called. A medic (or admin) can get you up; after DownedSeconds
+        /// you can choose to wake up at the nearest hospital, minus the bill. Stand at a clinic, type /where in chat,
         /// and add it under Hospitals. With none listed, you wake at Start.
         /// </summary>
         public Medical Medical { get; set; } = new();
