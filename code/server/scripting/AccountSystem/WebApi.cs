@@ -36,7 +36,8 @@ public record InfoDto(
     string DiscordRedirectUri,
     string DiscordScopes,
     string ModpackFingerprint,
-    int ModpackFiles);
+    int ModpackFiles,
+    LauncherContent Launcher);
 
 public record SessionDto(string Token, DateTime ExpiresUtc, string DiscordName, List<string> Characters, int MaxCharacters);
 
@@ -92,7 +93,8 @@ internal class AccountController : PluginWebApiController
             _plugin.Config.DiscordRedirectUri,
             _plugin.Discord.Scopes,
             manifest.Fingerprint,
-            manifest.Entries.Count);
+            manifest.Entries.Count,
+            _plugin.Launcher.Get());
     }
 
     [Route(HttpVerbs.Post, "/login")]

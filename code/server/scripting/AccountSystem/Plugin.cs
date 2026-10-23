@@ -21,6 +21,7 @@ namespace AccountSystem
         public static Plugin Instance { get; set; }
 
         internal Config Config { get; }
+        internal LauncherContentFile Launcher { get; }
         internal AccountStore Store { get; }
         internal Modpack Modpack { get; }
         internal Discord Discord { get; }
@@ -47,6 +48,7 @@ namespace AccountSystem
             Discord = new Discord(Config, msg => _logger.Warn(msg));
 
             Admins.Instance.Load(root);
+            Launcher = new LauncherContentFile(root);
 
             Authentication.Authenticator = Authenticate;
 

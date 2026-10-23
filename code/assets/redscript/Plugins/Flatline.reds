@@ -116,6 +116,7 @@ public class MpFlatline extends ScriptableSystem {
             MpExitVehicle(player);
         }
         this.Restrict(player, true);
+        MpHolster(player);
         player.RegisterInputListener(this, n"Choice1");
         let p = player.GetWorldPosition();
         MedicalServer.Downed(p.X, p.Y, p.Z);
@@ -153,6 +154,13 @@ public class MpFlatline extends ScriptableSystem {
                 this.WakeUp(player.GetWorldPosition(), "You pulled through.");
             }
             return;
+        }
+        // Weapons stay away (in case one was drawn again somehow).
+        if this.m_left % 3 == 0 {
+            let player = GetPlayer(this.GetGameInstance());
+            if IsDefined(player) {
+                MpHolster(player);
+            }
         }
         this.DrawHud();
         this.ScheduleTick();
@@ -326,4 +334,15 @@ public func MpClearHeat() -> Void {
 @addMethod(PreventionSystem)
 public func MpClearHeat() -> Void {
     this.ChangeHeatStage(EPreventionHeatStage.Heat_0, "CyberpunkMP flatline");
+}
+
+// Put away whatever's in the hands.
+public func MpHolster(player: ref<PlayerPuppet>) -> Void {
+    if !IsDefined(GameObject.GetActiveWeapon(player)) {
+        return;
+    }
+    let request = new EquipmentSystemWeaponManipulationRequest();
+    request.owner = player;
+    request.requestType = EquipmentManipulationAction.UnequipWeapon;
+    EquipmentSystem.GetInstance(player).QueueRequest(request);
 }

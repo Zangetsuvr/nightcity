@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Alert, Box, Button, CircularProgress, LinearProgress } from '@mui/material'
+import { Alert, Box, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, LinearProgress } from '@mui/material'
 import { ink } from '../theme.ts'
 import KeybindsDialog from './KeybindsDialog.tsx'
 
@@ -8,6 +8,15 @@ interface SessionInfo {
   characters: string[]
   maxCharacters: number
   expiresUtc: string
+}
+
+// What the server wants shown on its page (config/launcher.json on the server).
+interface LauncherContent {
+  Motd: string
+  Maintenance: { Active: boolean, Message: string, BlockPlay: boolean }
+  News: Array<{ Title: string, Date: string, Body: string }>
+  Rules: string[]
+  Links: Array<{ Label: string, Url: string }>
 }
 
 export interface ServerInfo {
@@ -20,6 +29,7 @@ export interface ServerInfo {
   LoginRequired: boolean
   ModpackRequired: boolean
   ModpackFiles: number
+  Launcher?: LauncherContent
   session: SessionInfo | null
 }
 
@@ -81,6 +91,8 @@ export default function ServerPanel ({ address, gamePath, onSelectGame, onBack, 
   const [busy, setBusy] = useState<string | null>(null)
   const [progress, setProgress] = useState<Progress | null>(null)
   const [keysOpen, setKeysOpen] = useState(false)
+  const [rulesOpen, setRulesOpen] = useState(false)
+  const [allNews, setAllNews] = useState(false)
 
   const load = useCallback(async () => {
     setError(null)
@@ -145,6 +157,11 @@ export default function ServerPanel ({ address, gamePath, onSelectGame, onBack, 
   const percent = progress?.total ? Math.round(((progress.done ?? 0) / progress.total) * 100) : undefined
   const tags = (info?.Tags ?? '').split(',').map(t => t.trim()).filter(Boolean)
   const playing = busy === 'play'
+  const content = info?.Launcher
+  const maintenance = content?.Maintenance?.Active ? content.Maintenance : null
+  const news = content?.News ?? []
+  const rules = content?.Rules ?? []
+  const links = (content?.Links ?? []).filter(l => /^https:\/\//i.test(l.Url))
 
   return (
     <Box className="stage">
@@ -168,9 +185,39 @@ export default function ServerPanel ({ address, gamePath, onSelectGame, onBack, 
             {tags.map(t => <span key={t} className="tag">{t}</span>)}
           </Box>
         )}
-        {info?.DiscordInvite && (
-          <Box component="a" href={info.DiscordInvite} target="_blank" rel="noreferrer" className="link" sx={{ mt: 3 }}>
-            Join the server's Discord
+        {content?.Motd && (
+          <Box sx={{ mt: 2, maxWidth: 520, pl: 1.5, borderLeft: `3px solid ${ink.sodium}`, lineHeight: 1.5 }}>{content.Motd}</Box>
+        )}
+        {(info?.DiscordInvite || links.length > 0 || rules.length > 0) && (
+          <Box sx={{ mt: 3, display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
+            {info?.DiscordInvite && (
+              <Box component="a" href={info.DiscordInvite} target="_blank" rel="noreferrer" className="link">
+                Join the server's Discord
+              </Box>
+            )}
+            {links.map(l => (
+              <Box key={l.Url} component="a" href={l.Url} target="_blank" rel="noreferrer" className="link">{l.Label || l.Url}</Box>
+            ))}
+            {rules.length > 0 && <Button size="small" onClick={() => setRulesOpen(true)}>Server rules</Button>}
+          </Box>
+        )}
+        {news.length > 0 && (
+          <Box sx={{ mt: 4, maxWidth: 560 }}>
+            <Box sx={{ fontSize: 12, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'text.secondary', mb: 1 }}>News</Box>
+            {(allNews ? news : news.slice(0, 2)).map((n, i) => (
+              <Box key={i} sx={{ py: 1.25, borderTop: `1px solid ${ink.rail}` }}>
+                <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'baseline' }}>
+                  <Box sx={{ fontWeight: 700 }}>{n.Title}</Box>
+                  {n.Date && <Box sx={{ fontSize: 12, color: 'text.secondary' }}>{n.Date}</Box>}
+                </Box>
+                {n.Body && <Box sx={{ mt: 0.5, color: 'text.secondary', lineHeight: 1.5, whiteSpace: 'pre-line' }}>{n.Body}</Box>}
+              </Box>
+            ))}
+            {news.length > 2 && (
+              <Button size="small" onClick={() => setAllNews(!allNews)} sx={{ mt: 0.5 }}>
+                {allNews ? 'Show less' : `Older news (${news.length - 2})`}
+              </Button>
+            )}
           </Box>
         )}
       </Box>
@@ -181,6 +228,10 @@ export default function ServerPanel ({ address, gamePath, onSelectGame, onBack, 
           <Alert severity="error" sx={{ mb: 2 }} action={<Button color="inherit" size="small" onClick={() => { void load() }}>Try again</Button>}>
             {error}
           </Alert>
+        )}
+
+        {maintenance && (
+          <Alert severity="warning" sx={{ mb: 2, whiteSpace: 'pre-line' }}>{maintenance.Message}</Alert>
         )}
 
         <Box className={`permit${session ? ' issued' : ''}`}>
@@ -219,7 +270,7 @@ export default function ServerPanel ({ address, gamePath, onSelectGame, onBack, 
 
         {session && (
           <>
-            <button className="enter" onClick={() => { void play() }} disabled={busy !== null || !gamePath}>
+            <button className="enter" onClick={() => { void play() }} disabled={busy !== null || !gamePath || (maintenance?.BlockPlay ?? false)}>
               {playing ? (progress?.step === 'playing' ? 'In the city' : 'Getting ready…') : 'Enter Night City'}
             </button>
             {session.characters.length === 0 && !playing && (
@@ -262,6 +313,15 @@ export default function ServerPanel ({ address, gamePath, onSelectGame, onBack, 
         )}
       </Box>
       <KeybindsDialog open={keysOpen} onClose={() => setKeysOpen(false)}/>
+      <Dialog open={rulesOpen} onClose={() => setRulesOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Server rules</DialogTitle>
+        <DialogContent>
+          <Box component="ol" sx={{ m: 0, pl: 3, lineHeight: 1.6 }}>
+            {rules.map((r, i) => <li key={i}>{r}</li>)}
+          </Box>
+        </DialogContent>
+        <DialogActions><Button onClick={() => setRulesOpen(false)}>Close</Button></DialogActions>
+      </Dialog>
     </Box>
   )
 }

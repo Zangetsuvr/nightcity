@@ -32,7 +32,18 @@ const info = {
   Tags: 'Roleplay, Whitelist, NA',
   LoginRequired: true,
   ModpackRequired: true,
-  ModpackFiles: 94
+  ModpackFiles: 94,
+  Launcher: {
+    Motd: 'Double pay on Trauma Team calls this weekend.',
+    Maintenance: { Active: false, Message: 'Down for maintenance until 8pm EST.', BlockPlay: true },
+    News: [
+      { Title: 'Players\' phone is live', Date: '2026-10-23', Body: 'Swap numbers in person, text, and send your location.' },
+      { Title: 'Flatlining reworked', Date: '2026-10-23', Body: 'You go down and Trauma Team is called. Hospital after 3 minutes.' },
+      { Title: 'Opening night', Date: '2026-10-20', Body: 'Welcome to the city.' }
+    ],
+    Rules: ['Stay in character.', 'No random killing.'],
+    Links: [{ Label: 'Rules & guides', Url: 'https://example.com' }]
+  }
 }
 const session = { discordName: 'Arcadia', characters: ['Jackie Welles'], maxCharacters: 1, expiresUtc: new Date(Date.now() + 11.5 * 3600e3).toISOString() }
 
