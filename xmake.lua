@@ -30,6 +30,9 @@ add_requires(
 -- "override" makes packages that need protobuf themselves (GameNetworkingSockets)
 -- use the same version instead of pulling a second, newer copy.
 add_requireconfs("**.protobuf-cpp", { version = "29.3", override = true })
+-- protobuf 29 needs abseil 20250127 or older; GameNetworkingSockets on Windows
+-- would otherwise ask for the newest abseil, which xmake treats as a conflict.
+add_requireconfs("**.abseil", { version = "20250127.0", override = true })
 
 if is_plat("windows") then
     set_arch("x64")
