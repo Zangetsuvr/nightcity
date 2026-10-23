@@ -31,15 +31,10 @@ private final func PushObjectiveQuestNotification(entry: wref<JournalEntry>) -> 
     wrappedMethod(entry);
 }
 
-// The incoming-call widget. Refused before it learns who's calling, so a call
-// is never shown and then dismissed.
-@wrapMethod(IncomingCallLogicController)
-public final func SetCallInfo(contactName: script_ref<String>, contactEntry: wref<JournalContact>, journalMgr: wref<JournalManager>, isRejectable: Bool) -> Void {
-    if MpQuestsSilenced() {
-        return;
-    }
-    wrappedMethod(contactName, contactEntry, journalMgr, isRejectable);
-}
+// (The incoming-call widget used to be refused here too. A call that was
+// already ringing when we connected then had a half-set-up widget, and the game
+// crashed when that call moved into the phone. Calls are now stopped before
+// they start, below, from the moment the game is started by the launcher.)
 
 // The phone itself: the single entry point quests use to start a call. Refusing
 // here means no ringtone, no restriction and no hidden call the player can't end.
@@ -63,10 +58,12 @@ public func MpSilenceStoryHolocalls() -> Void {
     }
 }
 
-// Are we on a server right now? Asked every time, never cached.
+// Are we playing on a server? True once the game was started by the launcher
+// (so a new character's first seconds, before connecting, are quiet too) and
+// while connected. Asked every time, never cached.
 public func MpQuestsSilenced() -> Bool {
     let network = GameInstance.GetNetworkWorldSystem();
-    return IsDefined(network) && network.IsConnected();
+    return IsDefined(network) && (network.IsConnected() || network.HasServerSession());
 }
 
 // Opens the world on a clean start.
@@ -110,6 +107,15 @@ public class MpQuestSuppressor extends ScriptableSystem {
 
     public static func Get() -> ref<MpQuestSuppressor> {
         return GameInstance.GetScriptableSystemsContainer(GetGameInstance()).Get(n"CyberpunkMP.Plugins.MpQuestSuppressor") as MpQuestSuppressor;
+    }
+
+    // Started by the launcher: quiet from the first moment in the world, not
+    // only once connected.
+    private func OnPlayerAttach(request: ref<PlayerAttachRequest>) -> Void {
+        let network = GameInstance.GetNetworkWorldSystem();
+        if IsDefined(network) && network.HasServerSession() {
+            this.Start();
+        }
     }
 
     // Called on connecting: clears what's already there and keeps watching.
