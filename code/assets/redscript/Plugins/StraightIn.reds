@@ -50,6 +50,7 @@ public class MpMenuAdvance extends DelayCallback {
     public let expansion: wref<ExpansionNewGame>;
     public let difficulty: wref<DifficultySelectionMenu>;
     public let lifePath: wref<CharacterCreationBackstorySelectionMenu>;
+    public let bodyType: wref<CharacterCreationGenderSelectionMenu>;
 
     public func Call() -> Void {
         if IsDefined(this.expansion) {
@@ -61,11 +62,14 @@ public class MpMenuAdvance extends DelayCallback {
         if IsDefined(this.lifePath) {
             this.lifePath.MpChooseLifePath();
         }
+        if IsDefined(this.bodyType) {
+            this.bodyType.MpShowPreviews();
+        }
     }
 }
 
-public func MpAdvanceSoon(callback: ref<MpMenuAdvance>) -> Void {
-    GameInstance.GetDelaySystem(GetGameInstance()).DelayCallback(callback, 0.2, false);
+public func MpAdvanceSoon(callback: ref<MpMenuAdvance>, opt seconds: Float) -> Void {
+    GameInstance.GetDelaySystem(GetGameInstance()).DelayCallback(callback, seconds > 0.0 ? seconds : 0.2, false);
 }
 
 @wrapMethod(ExpansionNewGame)
@@ -112,7 +116,9 @@ protected cb func OnInitialize() -> Bool {
         this.GetRootWidget().SetVisible(false);
         let next = new MpMenuAdvance();
         next.lifePath = this;
-        MpAdvanceSoon(next);
+        // The body type previews start loading behind this screen; give them a
+        // moment, as a player reading the lifepaths would.
+        MpAdvanceSoon(next, 3.0);
     }
     return result;
 }
@@ -121,6 +127,38 @@ protected cb func OnInitialize() -> Bool {
 public func MpChooseLifePath() -> Void {
     this.m_characterCustomizationState.SetLifePath(t"LifePaths.StreetKid");
     this.NextMenu();
+}
+
+// Body type: the two previews only appear when the game says their puppets are
+// ready. If that moment passed before this screen opened, show them anyway.
+@addField(CharacterCreationGenderSelectionMenu)
+let m_mpPreviewsShown: Bool;
+
+@wrapMethod(CharacterCreationGenderSelectionMenu)
+protected cb func OnInitialize() -> Bool {
+    let result = wrappedMethod();
+    if MpSkipsNewGameChoices() {
+        let check = new MpMenuAdvance();
+        check.bodyType = this;
+        MpAdvanceSoon(check, 3.0);
+    }
+    return result;
+}
+
+@wrapMethod(CharacterCreationGenderSelectionMenu)
+protected cb func OnPuppetReadyToBeDisplayed(evt: ref<gameuiPuppetPreview_ReadyToBeDisplayed>) -> Bool {
+    this.m_mpPreviewsShown = true;
+    return wrappedMethod(evt);
+}
+
+@addMethod(CharacterCreationGenderSelectionMenu)
+public func MpShowPreviews() -> Void {
+    if this.m_mpPreviewsShown {
+        return;
+    }
+    this.m_mpPreviewsShown = true;
+    this.PlayLibraryAnimation(n"male_preview_intro");
+    this.PlayLibraryAnimation(n"female_preview_intro");
 }
 
 // Connects a few seconds after the player is in the world.
