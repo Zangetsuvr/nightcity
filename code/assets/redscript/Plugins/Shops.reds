@@ -230,6 +230,13 @@ public class MpDealership extends ScriptableSystem {
     public let m_position: Vector4;
     public let m_known: Bool;
     public let m_cars: array<ref<MpCarOffer>>;
+    // Shop prices from the server's prices.json.
+    public let m_priceKnown: Bool;
+    public let m_globalMultiplier: Float;
+    public let m_categoryNames: array<String>;
+    public let m_categoryMultipliers: array<Float>;
+    public let m_itemIDs: array<TweakDBID>;
+    public let m_itemPrices: array<Int32>;
     private let m_mappin: NewMappinID;
     private let m_hasMappin: Bool;
     private let m_markers: array<NewMappinID>;
@@ -240,6 +247,11 @@ public class MpDealership extends ScriptableSystem {
 
     public func Load(payload: String) -> Void {
         ArrayClear(this.m_cars);
+        ArrayClear(this.m_categoryNames);
+        ArrayClear(this.m_categoryMultipliers);
+        ArrayClear(this.m_itemIDs);
+        ArrayClear(this.m_itemPrices);
+        this.m_globalMultiplier = 1.0;
         let mappins = GameInstance.GetMappinSystem(this.GetGameInstance());
         for id in this.m_markers {
             mappins.UnregisterMappin(id);
@@ -252,6 +264,18 @@ public class MpDealership extends ScriptableSystem {
                 this.m_position = new Vector4(StringToFloat(f[2]), StringToFloat(f[3]), StringToFloat(f[4]), 1.0);
                 this.m_known = true;
             } else {
+                if ArraySize(f) >= 2 && Equals(f[0], "PG") {
+                    this.m_globalMultiplier = StringToFloat(f[1]);
+                    this.m_priceKnown = true;
+                }
+                if ArraySize(f) >= 3 && Equals(f[0], "PC") {
+                    ArrayPush(this.m_categoryNames, f[1]);
+                    ArrayPush(this.m_categoryMultipliers, StringToFloat(f[2]));
+                }
+                if ArraySize(f) >= 3 && Equals(f[0], "PI") {
+                    ArrayPush(this.m_itemIDs, TDBID.Create(f[1]));
+                    ArrayPush(this.m_itemPrices, StringToInt(f[2]));
+                }
                 if ArraySize(f) >= 6 && Equals(f[0], "M") {
                     let position = new Vector4(StringToFloat(f[3]), StringToFloat(f[4]), StringToFloat(f[5]), 1.0);
                     ArrayPush(this.m_markers, MpRegisterMapIcon(MpMarkerVariant(f[1]), position));
@@ -282,6 +306,27 @@ public class MpDealership extends ScriptableSystem {
         }
         this.m_mappin = MpRegisterMapIcon(gamedataMappinVariant.Zzz01_CarForPurchaseVariant, this.m_position);
         this.m_hasMappin = true;
+    }
+
+    public func ServerPrice(itemID: ItemID, gamePrice: Int32) -> Int32 {
+        let record = ItemID.GetTDBID(itemID);
+        let i = 0;
+        while i < ArraySize(this.m_itemIDs) {
+            if this.m_itemIDs[i] == record {
+                return this.m_itemPrices[i];
+            }
+            i += 1;
+        }
+        let multiplier = this.m_globalMultiplier;
+        let category = ToString(RPGManager.GetItemCategory(itemID));
+        i = 0;
+        while i < ArraySize(this.m_categoryNames) {
+            if Equals(this.m_categoryNames[i], category) {
+                multiplier *= this.m_categoryMultipliers[i];
+            }
+            i += 1;
+        }
+        return Max(1, RoundF(Cast<Float>(gamePrice) * multiplier));
     }
 
     public func IsNear(player: ref<GameObject>) -> Bool {
@@ -327,4 +372,19 @@ public func MpMarkerVariant(kind: String) -> gamedataMappinVariant {
     if Equals(k, "blackmarket") { return gamedataMappinVariant.Zzz14_ServicePointBlackMarketVariant; }
     if Equals(k, "car") { return gamedataMappinVariant.Zzz01_CarForPurchaseVariant; }
     return gamedataMappinVariant.ServicePointGunsVariant;
+}
+
+// ------------------------------------------------------------------ shop prices
+
+// What a shop item costs on the server: a fixed price from prices.json if it
+// has one, otherwise the game's own price times the category and global
+// multipliers. Used for what the shop shows and for what you're charged.
+@wrapMethod(MarketSystem)
+public final static func GetBuyPrice(vendorObject: wref<GameObject>, itemID: ItemID) -> Int32 {
+    let price = wrappedMethod(vendorObject, itemID);
+    let shops = MpDealership.Get();
+    if !MpWorldKeepsRunning() || !IsDefined(shops) || !shops.m_priceKnown {
+        return price;
+    }
+    return shops.ServerPrice(itemID, price);
 }

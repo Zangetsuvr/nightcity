@@ -36,7 +36,8 @@ namespace CharacterSystem
 
             var security = new Security(Config, dataDir, msg => _logger.Warn(msg));
 
-            Characters = new Characters(store, Config, security)
+            var prices = Prices.Load(root, Config, msg => _logger.Error(msg));
+            Characters = new Characters(store, Config, security, prices)
             {
                 PushBalance = (id, balance) => Cyberpunk.Rpc.Client.Plugins.CharacterClient.SetBalance(id, balance),
                 PushProgress = (id, level, xp, next) => Cyberpunk.Rpc.Client.Plugins.CharacterClient.SetProgress(id, level, xp, next),

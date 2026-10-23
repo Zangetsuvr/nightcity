@@ -16,6 +16,7 @@ namespace CharacterSystem
         private readonly ICharacterStore _store;
         private readonly Config _config;
         private readonly Security _security;
+        private readonly Prices _prices;
 
         private readonly object _onlineLock = new();
         private readonly Dictionary<ulong, string> _online = new();
@@ -45,8 +46,9 @@ namespace CharacterSystem
         internal ICharacterStore Store => _store;
         internal Security Security => _security;
 
-        public Characters(ICharacterStore store, Config config, Security security)
+        public Characters(ICharacterStore store, Config config, Security security, Prices? prices = null)
         {
+            _prices = prices ?? new Prices { Cars = config.Dealership.Cars, CyberwareTiers = config.CyberwareTiers };
             _store = store;
             _config = config;
             _security = security;
@@ -345,9 +347,14 @@ namespace CharacterSystem
                     d.Location.Z.ToString(System.Globalization.CultureInfo.InvariantCulture)),
             };
             var inv = System.Globalization.CultureInfo.InvariantCulture;
+            lines.Add(string.Join("~", "PG", _prices.ShopMultiplier.ToString(inv)));
+            foreach (var (category, multiplier) in _prices.CategoryMultipliers)
+                lines.Add(string.Join("~", "PC", Clean(category), multiplier.ToString(inv)));
+            foreach (var (item, price) in _prices.ItemPrices)
+                lines.Add(string.Join("~", "PI", Clean(item), Math.Max(0, Math.Min(int.MaxValue, price)).ToString()));
             foreach (var m in _config.MapMarkers)
                 lines.Add(string.Join("~", "M", Clean(m.Type), Clean(m.Name), m.X.ToString(inv), m.Y.ToString(inv), m.Z.ToString(inv)));
-            foreach (var car in d.Cars)
+            foreach (var car in _prices.Cars)
                 lines.Add(string.Join("~", "V", Clean(car.Record), Clean(car.Name), car.Price.ToString()));
             PushShopData(playerId, string.Join("^", lines));
 
@@ -358,7 +365,7 @@ namespace CharacterSystem
 
         private void SendCyberware(ulong playerId, int tier)
         {
-            var tiers = _config.CyberwareTiers.OrderBy(t => t.Tier).ToList();
+            var tiers = _prices.CyberwareTiers.OrderBy(t => t.Tier).ToList();
             var current = tiers.LastOrDefault(t => t.Tier <= tier) ?? tiers.FirstOrDefault();
             if (current == null)
                 return;
@@ -385,7 +392,7 @@ namespace CharacterSystem
                 return;
 
             var tier = _store.Read(key, r => r.CyberwareTier);
-            var next = _config.CyberwareTiers.OrderBy(t => t.Tier).FirstOrDefault(t => t.Tier > tier);
+            var next = _prices.CyberwareTiers.OrderBy(t => t.Tier).FirstOrDefault(t => t.Tier > tier);
             if (next == null)
             {
                 Notify(playerId, "You're already at the highest cyberware tier.");
@@ -410,7 +417,7 @@ namespace CharacterSystem
             if (key == null || !_security.AllowCall(playerId, "buy-vehicle", 2))
                 return;
 
-            var offer = _config.Dealership.Cars.FirstOrDefault(c => string.Equals(c.Record, record, StringComparison.Ordinal));
+            var offer = _prices.Cars.FirstOrDefault(c => string.Equals(c.Record, record, StringComparison.Ordinal));
             if (offer == null)
                 return;
 
