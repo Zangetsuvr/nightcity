@@ -169,6 +169,22 @@ async function removeIfExists (file) {
 
 // ------------------------------------------------------------------ apply / restore
 
+// Files mods rewrite while the game runs, outside the mod folders: redscript
+// compiles all scripts into final.redscripts (keeping the original as .bk).
+// They're copied before playing and put back afterwards, so single player
+// isn't left with the multiplayer scripts once the modpack is removed.
+const SNAPSHOT_FILES = ['r6/cache/final.redscripts', 'r6/cache/final.redscripts.bk']
+const SNAPSHOT_DIR = '__snapshot__'
+
+async function exists (file) {
+  try {
+    await fs.access(file)
+    return true
+  } catch {
+    return false
+  }
+}
+
 /**
  * Makes the game folder match the modpack.
  *
@@ -187,8 +203,22 @@ export async function applyModpack (gameRoot, manifest, options) {
   // A previous session that never got restored (crash, power cut) comes first.
   await restore(gameRoot, stateFile)
 
-  const state = { gameRoot, setAside: [], added: [], replaced: [] }
+  const state = { gameRoot, setAside: [], added: [], replaced: [], snapshots: [], absent: [] }
   await writeState(stateFile, state)
+
+  const setAsideDir = path.join(gameRoot, SET_ASIDE_DIR)
+  for (const rel of SNAPSHOT_FILES) {
+    const file = path.join(gameRoot, rel)
+    if (await exists(file)) {
+      const copy = path.join(setAsideDir, SNAPSHOT_DIR, rel)
+      await fs.mkdir(path.dirname(copy), { recursive: true })
+      await fs.copyFile(file, copy)
+      state.snapshots.push(rel)
+    } else {
+      state.absent.push(rel)
+    }
+    await writeState(stateFile, state)
+  }
 
   const wanted = new Map(manifest.Entries.map(e => [normalize(e.Path).toLowerCase(), e]))
   const present = await scanModFiles(gameRoot, manifest)
@@ -290,6 +320,12 @@ export async function restore (gameRoot, stateFile) {
     await removeIfExists(to)
     await moveFile(from, to)
   }
+
+  for (const rel of state.snapshots || []) {
+    const copy = path.join(setAsideRoot, SNAPSHOT_DIR, rel)
+    if (await exists(copy)) await fs.copyFile(copy, path.join(root, rel))
+  }
+  for (const rel of state.absent || []) await removeIfExists(path.join(root, rel))
 
   await fs.rm(setAsideRoot, { recursive: true, force: true })
   await fs.unlink(stateFile)

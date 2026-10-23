@@ -135,5 +135,15 @@ await restore(game, stateFile)
 assert.deepEqual(await tree(game), before)
 console.log('corrupted download rejected; restore clean')
 
+// ---- redscript's compiled scripts are put back after playing
+await put(game, 'r6/cache/final.redscripts', 'vanilla scripts')
+const beforeScripts = await tree(game)
+await applyModpack(game, manifest, { cacheDir, stateFile, download: (r, d) => apiClient.download(r, d) })
+await put(game, 'r6/cache/final.redscripts', 'compiled with multiplayer scripts')
+await put(game, 'r6/cache/final.redscripts.bk', 'vanilla scripts')
+await restore(game, stateFile)
+assert.deepEqual(await tree(game), beforeScripts)
+console.log('restore: compiled scripts put back, redscript backup removed')
+
 console.log('FINGERPRINT_VECTOR', JSON.stringify(manifest.Entries.map(e => [e.Path, e.Sha256])), manifest.Fingerprint)
 server.close()
