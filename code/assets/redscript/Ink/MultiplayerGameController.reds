@@ -793,6 +793,11 @@ public class MultiplayerGameController extends inkGameController {
         board.Open(this);
     }
 
+    // From outside (the /dealer command): same as pressing the job key.
+    public final func OpenJobBoardFromChat() -> Void {
+        this.OpenJobBoard();
+    }
+
     // The admin panel (Ink/AdminPanelUI.reds), opened by the server's answer to /admin.
     public final func OpenAdminPanel() -> Void {
         let panel = MpAdminPanel.Get();

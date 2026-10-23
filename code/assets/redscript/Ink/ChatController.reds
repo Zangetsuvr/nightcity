@@ -17,6 +17,7 @@ public class ChatController extends inkHUDGameController {
     private let m_chatInputOpen: Bool;
     private let m_input: wref<inkTextInput>;
     private let m_lastMessageData: ref<ChatMessageData>;
+    private let m_mpOpenDealerAfterChat: Bool;
 
     protected cb func OnInitialize() -> Bool {
         FTLog(s"[ChatController] OnInitialize");
@@ -169,8 +170,14 @@ public class ChatController extends inkHUDGameController {
             return;
         }
         if Equals(textEntered, "/dealer") {
+            // At the dealership: open it. Anywhere else: say where it is and why not.
             let dealer = MpDealership.Get();
-            MpJobMessage(IsDefined(dealer) ? dealer.Describe() : "Dealership: not loaded.");
+            let controller = GameInstance.GetNetworkWorldSystem().GetAppearanceSystem().m_controller;
+            if IsDefined(dealer) && dealer.IsNear(GetPlayer(GetGameInstance())) && ArraySize(dealer.m_cars) > 0 && IsDefined(controller) {
+                this.m_mpOpenDealerAfterChat = true;
+            } else {
+                MpJobMessage(IsDefined(dealer) ? dealer.Describe() : "Dealership: not loaded.");
+            }
             return;
         }
         if Equals(textEntered, "/where") {
@@ -240,6 +247,13 @@ public class ChatController extends inkHUDGameController {
             case n"EnterChat":
                 this.SendChat();
                 this.ShowChatInput(false);
+                if this.m_mpOpenDealerAfterChat {
+                    this.m_mpOpenDealerAfterChat = false;
+                    let controller = GameInstance.GetNetworkWorldSystem().GetAppearanceSystem().m_controller;
+                    if IsDefined(controller) {
+                        controller.OpenJobBoardFromChat();
+                    }
+                }
                 return true;
                 break;
             case n"OpenPauseMenu":

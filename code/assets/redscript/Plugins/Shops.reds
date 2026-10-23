@@ -297,6 +297,7 @@ public class MpDealership extends ScriptableSystem {
             }
         }
         this.PlaceMappin();
+        this.Watch();
     }
 
     private func PlaceMappin() -> Void {
@@ -338,6 +339,30 @@ public class MpDealership extends ScriptableSystem {
             return false;
         }
         return Vector4.Distance(player.GetWorldPosition(), this.m_position) < 12.0;
+    }
+
+    // Walking up to the dealership: say how to open it, once per visit.
+    private let m_hinted: Bool;
+    private let m_watching: Bool;
+
+    public func Watch() -> Void {
+        if this.m_watching {
+            return;
+        }
+        this.m_watching = true;
+        GameInstance.GetDelaySystem(this.GetGameInstance()).DelayCallback(new MpDealershipWatch(), 1.0, false);
+    }
+
+    public func CheckNear() -> Void {
+        let near = this.IsNear(GetPlayer(this.GetGameInstance())) && ArraySize(this.m_cars) > 0;
+        if near && !this.m_hinted {
+            this.m_hinted = true;
+            MpJobMessage(this.m_name + ": press your job board key or type /dealer to browse cars.");
+        }
+        if !near {
+            this.m_hinted = false;
+        }
+        GameInstance.GetDelaySystem(this.GetGameInstance()).DelayCallback(new MpDealershipWatch(), 1.0, false);
     }
 
     // /dealer in chat: what the game knows about the dealership.
@@ -402,4 +427,13 @@ public final static func GetBuyPrice(vendorObject: wref<GameObject>, itemID: Ite
         return price;
     }
     return shops.ServerPrice(itemID, price);
+}
+
+public class MpDealershipWatch extends DelayCallback {
+    public func Call() -> Void {
+        let dealer = MpDealership.Get();
+        if IsDefined(dealer) {
+            dealer.CheckNear();
+        }
+    }
 }
