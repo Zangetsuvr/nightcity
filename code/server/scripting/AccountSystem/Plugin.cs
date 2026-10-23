@@ -46,6 +46,8 @@ namespace AccountSystem
             Modpack = new Modpack(Resolve(root, Config.ModpackFolder), Config);
             Discord = new Discord(Config, msg => _logger.Warn(msg));
 
+            Admins.Instance.Load(root);
+
             Authentication.Authenticator = Authenticate;
 
             Server.PlayerSystem.PlayerJoinEvent += OnPlayerJoin;

@@ -71,3 +71,9 @@ void PlayerScriptInstance::Call(uint64_t Klass, uint64_t Function, IBuffer* Argu
 {
     IRpc::Get()->Call(GetId(), Klass, Function, Arguments);
 }
+
+void PlayerScriptInstance::Kick()
+{
+    if (const auto pComponent = m_player.get<PlayerComponent>())
+        GServer->Kick(pComponent->Connection);
+}

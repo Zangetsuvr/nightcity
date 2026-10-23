@@ -16,6 +16,12 @@ namespace CyberpunkSdk.Game
             player.SendChat(From, Message);
         }
 
+        /// <summary>Drops the player's connection.</summary>
+        public void Kick()
+        {
+            player.Kick();
+        }
+
         public ulong Id
         {
             get { return player.Id; }

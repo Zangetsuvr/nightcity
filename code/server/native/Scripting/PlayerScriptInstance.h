@@ -16,6 +16,7 @@ struct PlayerScriptInstance final : IPlayer
     IAttachmentComponent* GetAttachmentComponent() override;
     const char* GetUsername() const override;
     void SendChat(const char* From, const char* Message) override;
+    void Kick() override;
     void Call(uint64_t Klass, uint64_t Function, IBuffer* Arguments) override;
 
 protected:

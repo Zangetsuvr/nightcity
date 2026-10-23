@@ -19,6 +19,8 @@ struct IPlayer
     virtual const char* GetUsername() const = 0;
     virtual void SendChat(const char* From, const char* Message) = 0;
     virtual void Call(uint64_t Klass, uint64_t Function, IBuffer* Arguments) = 0;
+    // Drops this player's connection (admin kick).
+    virtual void Kick() = 0;
 
 protected:
 
