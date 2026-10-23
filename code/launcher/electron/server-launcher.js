@@ -131,6 +131,18 @@ export function registerServerLauncher ({ electron, store, getWindow, configDir 
 
     progress({ step: 'checking-server' })
     const info = await api.info()
+
+    // Make sure the server still takes this login before starting the game;
+    // otherwise the game would load only to be turned away when it connects.
+    let characters = session.characters || []
+    try {
+      characters = (await api.me(session.token)).Characters || characters
+    } catch (e) {
+      if (e.status === 401 || e.status === 403) {
+        deleteSession(key)
+        throw new Error('Your login expired. Log in with Discord again.')
+      }
+    }
     const gameIp = await resolveHost(host).catch(() => {
       throw new Error(`Couldn't find the server's address (${host}).`)
     })
@@ -156,10 +168,6 @@ export function registerServerLauncher ({ electron, store, getWindow, configDir 
     // creator); the session carries the login and where the server is.
     // Which characters this account has decides where the game goes from the
     // main menu: straight into the newest save, or a New Game to make one.
-    let characters = session.characters || []
-    try {
-      characters = (await api.me(session.token)).Characters || characters
-    } catch {}
 
     await writeSession(gameRoot, config.sessionFile, {
       token: `${session.token}:${fingerprint}`,

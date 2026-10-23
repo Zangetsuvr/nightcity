@@ -93,30 +93,7 @@ public class CharacterClient extends ClientRpc {
         let ts = GameInstance.GetTransactionSystem(game);
         let equipment = EquipmentSystem.GetInstance(player);
         for entry in StrSplit(items, "|") {
-            this.MpGiveKitItem(player, entry, ts, equipment);
-        }
-    }
-
-    private func MpGiveKitItem(player: ref<PlayerPuppet>, entry: String, ts: ref<TransactionSystem>, equipment: ref<EquipmentSystem>) -> Void {
-        let parts = StrSplit(entry, ",");
-        if ArraySize(parts) < 3 {
-            return;
-        }
-        let record = TDBID.Create(parts[0]);
-        let quantity = StringToInt(parts[1]);
-        if !IsDefined(TweakDBInterface.GetItemRecord(record)) || quantity <= 0 {
-            return;
-        }
-        ts.GiveItem(player, ItemID.FromTDBID(record), quantity);
-        if Equals(parts[2], "1") {
-            let data = ts.GetItemDataByTDBID(player, record);
-            if IsDefined(data) && ItemID.IsValid(data.GetID()) {
-                let equip = new EquipRequest();
-                equip.owner = player;
-                equip.itemID = data.GetID();
-                equip.addToInventory = false;
-                equipment.QueueRequest(equip);
-            }
+            MpGiveKitItem(player, entry, ts, equipment);
         }
     }
 
@@ -158,4 +135,29 @@ public func MpIsStartingGear(data: wref<gameItemData>) -> Bool {
     return Equals(data.GetItemType(), gamedataItemType.Con_Ammo)
         || Equals(category, gamedataItemCategory.Clothing) || Equals(category, gamedataItemCategory.Weapon)
         || Equals(category, gamedataItemCategory.Gadget) || Equals(category, gamedataItemCategory.Consumable);
+}
+
+// One "item,quantity,equip" entry of a starter kit. Kept out of CharacterClient:
+// every function in an RPC class is treated as a call the server can make.
+public func MpGiveKitItem(player: ref<PlayerPuppet>, entry: String, ts: ref<TransactionSystem>, equipment: ref<EquipmentSystem>) -> Void {
+    let parts = StrSplit(entry, ",");
+    if ArraySize(parts) < 3 {
+        return;
+    }
+    let record = TDBID.Create(parts[0]);
+    let quantity = StringToInt(parts[1]);
+    if !IsDefined(TweakDBInterface.GetItemRecord(record)) || quantity <= 0 {
+        return;
+    }
+    ts.GiveItem(player, ItemID.FromTDBID(record), quantity);
+    if Equals(parts[2], "1") {
+        let data = ts.GetItemDataByTDBID(player, record);
+        if IsDefined(data) && ItemID.IsValid(data.GetID()) {
+            let equip = new EquipRequest();
+            equip.owner = player;
+            equip.itemID = data.GetID();
+            equip.addToInventory = false;
+            equipment.QueueRequest(equip);
+        }
+    }
 }
