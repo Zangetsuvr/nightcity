@@ -15,3 +15,8 @@ story phases (prologue, act 1, epilogue, final boards) and of the side-job and
 minor-quest phases are renamed `MP_OFF_...`, so nothing can start them. Nothing
 else is touched: open-world content (shops, travel, apartments, world
 activities), bugfixing and the rest still run. Undo = delete the archive.
+
+`base/open_world/phases/open_world_content.questphase`: the inputs of fixer
+gigs, minor activities (NCPD scanner hustles, cyberpsychos), combat events and
+street stories are renamed `MP_OFF_...`. Vendors, fast travel, the metro, radio,
+city life, cars and the rest are untouched.
