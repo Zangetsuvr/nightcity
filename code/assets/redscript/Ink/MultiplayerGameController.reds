@@ -243,12 +243,16 @@ public class MultiplayerGameController extends inkGameController {
             this.m_player.RegisterInputListener(this, n"UIDisconnectFromServer");
             this.m_player.RegisterInputListener(this, n"UIEmote");
             this.m_player.RegisterInputListener(this, n"UIJob");
+            this.m_player.RegisterInputListener(this, n"UIVoice");
+            this.m_player.RegisterInputListener(this, n"UIVoiceRange");
         } else {
             this.GetWidget(n"hud") as inkCompoundWidget.RemoveChild(this.GetWidget(n"hud/chat"));
             this.m_player.RegisterInputListener(this, n"UIConnectToServer");
             this.m_player.UnregisterInputListener(this, n"UIDisconnectFromServer");
             this.m_player.UnregisterInputListener(this, n"UIEmote");
             this.m_player.UnregisterInputListener(this, n"UIJob");
+            this.m_player.UnregisterInputListener(this, n"UIVoice");
+            this.m_player.UnregisterInputListener(this, n"UIVoiceRange");
         }
         this.UpdateInputHints();
     }
@@ -327,6 +331,11 @@ public class MultiplayerGameController extends inkGameController {
     }
 
     public final func EnableServerInput() -> Void {
+        // A menu is opening: stop sending voice (its release might never arrive).
+        let voice = MpVoice.Get();
+        if IsDefined(voice) {
+            voice.Talk(false);
+        }
         this.m_player.RegisterInputListener(this, n"popup_moveDown");
         this.m_player.RegisterInputListener(this, n"popup_moveUp");
         this.m_player.RegisterInputListener(this, n"popup_moveUp_left_stick_up");
@@ -1043,6 +1052,27 @@ public class MultiplayerGameController extends inkGameController {
                 };
             }
         } else {
+            // Voice: push-to-talk and range, whatever else is going on.
+            if Equals(actionName, n"UIVoice") {
+                let voice = MpVoice.Get();
+                if IsDefined(voice) {
+                    if Equals(actionType, gameinputActionType.BUTTON_PRESSED) {
+                        voice.Talk(true);
+                    } else {
+                        if Equals(actionType, gameinputActionType.BUTTON_RELEASED) {
+                            voice.Talk(false);
+                        }
+                    }
+                }
+                return false;
+            }
+            if Equals(actionName, n"UIVoiceRange") && Equals(actionType, gameinputActionType.BUTTON_PRESSED) {
+                let voice = MpVoice.Get();
+                if IsDefined(voice) {
+                    voice.CycleRange();
+                }
+                return true;
+            }
             let phone = MpPhone.Get();
             if IsDefined(phone) && phone.IsOpen() {
                 if Equals(actionName, n"OpenPauseMenu") {

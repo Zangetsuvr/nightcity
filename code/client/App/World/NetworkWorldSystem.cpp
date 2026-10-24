@@ -183,7 +183,88 @@ void NetworkWorldSystem::Update(uint64_t aTick)
 
     const auto service = Core::Container::Get<NetworkService>();
     if (service && service->IsConnected())
+    {
         progress(static_cast<float>(delta) / 1000.f);
+        TickVoice();
+    }
+}
+
+// ---------------------------------------------------------------- voice
+
+void NetworkWorldSystem::TickVoice()
+{
+    if (!m_voice)
+        return;
+
+    glm::vec3 listener{};
+    glm::quat facing{1.f, 0.f, 0.f, 0.f};
+    bool hasListener = false;
+    {
+        const auto system = Red::GetGameSystem<Game::PlayerSystem>();
+        Red::Handle<Red::GameObject> player;
+        system->GetLocalPlayerControlledGameObject(player);
+        if (auto puppet = Red::Cast<Red::game::Puppet>(player); puppet && puppet->placedComponent)
+        {
+            listener = Game::ToGlm(puppet->placedComponent->worldTransform.Position);
+            facing = Game::ToGlm(puppet->placedComponent->worldTransform.Orientation);
+            hasListener = true;
+        }
+    }
+
+    m_voice->Tick(
+        [this](uint64_t aServerId, glm::vec3& aOut)
+        {
+            const auto id = GetEntityIdByServerId(aServerId);
+            if (id.hash == 0)
+                return false;
+            auto puppet = Red::Cast<Red::game::Puppet>(GetEntity(id));
+            if (!puppet || !puppet->placedComponent)
+                return false;
+            aOut = Game::ToGlm(puppet->placedComponent->worldTransform.Position);
+            return true;
+        },
+        hasListener, listener, facing);
+}
+
+void NetworkWorldSystem::SetVoiceTalking(bool aTalking)
+{
+    if (m_voice)
+        m_voice->SetTalking(aTalking);
+}
+
+bool NetworkWorldSystem::IsVoiceTalking() const
+{
+    return m_voice && m_voice->IsTalking();
+}
+
+void NetworkWorldSystem::SetVoiceRange(int32_t aRange)
+{
+    if (m_voice)
+        m_voice->SetRange(aRange);
+}
+
+int32_t NetworkWorldSystem::GetVoiceRange() const
+{
+    return m_voice ? m_voice->GetRange() : 1;
+}
+
+bool NetworkWorldSystem::HasVoiceMicrophone() const
+{
+    return m_voice && m_voice->HasMicrophone();
+}
+
+Red::DynArray<Red::EntityID> NetworkWorldSystem::GetSpeakingEntities() const
+{
+    Red::DynArray<Red::EntityID> result;
+    if (!m_voice)
+        return result;
+    for (const auto id : m_voice->GetSpeakingIds())
+    {
+        const auto entityId = GetEntityIdByServerId(id);
+        if (entityId.hash != 0)
+            result.PushBack(entityId);
+    }
+    return result;
 }
 
 void NetworkWorldSystem::OnWorldAttached(RED4ext::world::RuntimeScene* aScene)
@@ -444,6 +525,9 @@ void NetworkWorldSystem::OnInitialize(const RED4ext::JobHandle& aJob)
 
     m_vehicleSystem = RED4ext::MakeHandle<VehicleSystem>();
     m_vehicleSystem->OnInitialize(aJob);
+
+    m_voice = std::make_unique<VoiceChat>();
+    Core::Container::Get<NetworkService>()->RegisterHandler<&VoiceChat::HandleVoiceData>(m_voice.get());
 }
 
 void NetworkWorldSystem::Connect()
@@ -496,6 +580,9 @@ void NetworkWorldSystem::OnConnected()
         });
 
     m_interpolationSystem->OnConnected();
+
+    if (m_voice)
+        m_voice->Start();
 }
 
 void NetworkWorldSystem::OnDisconnected(Client::EDisconnectReason aReason)
@@ -522,6 +609,9 @@ void NetworkWorldSystem::OnDisconnected(Client::EDisconnectReason aReason)
 
     m_interpolationSystem->OnDisconnected();
     m_vehicleSystem->OnDisconnected();
+
+    if (m_voice)
+        m_voice->Stop();
 
     RED4ext::StackArgs_t args;
     auto reason = (uint32_t)aReason;

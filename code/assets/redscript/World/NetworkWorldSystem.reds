@@ -30,6 +30,14 @@ public native class NetworkWorldSystem extends IGameSystem {
     public native func GetInterpolationSystem() -> ref<InterpolationSystem>;
     public native func GetVehicleSystem() -> ref<VehicleSystem>;
 
+    // Voice chat (Plugins/Voice.reds; client App/Voice/VoiceChat.cpp).
+    public native func SetVoiceTalking(talking: Bool) -> Void;
+    public native func IsVoiceTalking() -> Bool;
+    public native func SetVoiceRange(range: Int32) -> Void;
+    public native func GetVoiceRange() -> Int32;
+    public native func HasVoiceMicrophone() -> Bool;
+    public native func GetSpeakingEntities() -> array<EntityID>;
+
     public func OnConnected() -> Void {
         // let evt: ref<ConnectedToServer>;
         // evt.m_connected = true;

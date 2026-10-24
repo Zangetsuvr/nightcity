@@ -9,6 +9,7 @@
 #include "ChatSystem.h"
 #include "InterpolationSystem.h"
 #include "VehicleSystem.h"
+#include "App/Voice/VoiceChat.h"
 
 struct NetworkWorldSystem : RED4ext::IGameSystem, Core::HookingAgent, flecs::world
 {
@@ -64,6 +65,15 @@ struct NetworkWorldSystem : RED4ext::IGameSystem, Core::HookingAgent, flecs::wor
     void OnConnected();
     void OnDisconnected(Client::EDisconnectReason);
 
+    // Voice chat (App/Voice/VoiceChat.h), driven by push-to-talk in script.
+    void SetVoiceTalking(bool aTalking);
+    bool IsVoiceTalking() const;
+    void SetVoiceRange(int32_t aRange);
+    int32_t GetVoiceRange() const;
+    bool HasVoiceMicrophone() const;
+    // Characters (entity ids) of players you can hear talking right now.
+    Red::DynArray<Red::EntityID> GetSpeakingEntities() const;
+
 protected:
     void OnWorldAttached(RED4ext::world::RuntimeScene* aScene) override;
     void OnAfterWorldDetach() override;
@@ -74,6 +84,7 @@ protected:
     void HandleSpawnCharacterResponse(const PacketEvent<server::SpawnCharacterResponse>& aMessage);
 
     void UpdatePlayerLocation() const;
+    void TickVoice();
 
 private:
     bool m_ready{false};
@@ -87,6 +98,7 @@ private:
     Red::Handle<AppearanceSystem> m_appearanceSystem;
     Red::Handle<ChatSystem> m_chatSystem;
     Red::Handle<VehicleSystem> m_vehicleSystem;
+    std::unique_ptr<VoiceChat> m_voice;
 };
 
 RTTI_DEFINE_CLASS(NetworkWorldSystem, { 
@@ -113,4 +125,10 @@ RTTI_DEFINE_CLASS(NetworkWorldSystem, {
     RTTI_METHOD(GetInterpolationSystem);
     RTTI_METHOD(GetChatSystem);
     RTTI_METHOD(GetVehicleSystem);
+    RTTI_METHOD(SetVoiceTalking);
+    RTTI_METHOD(IsVoiceTalking);
+    RTTI_METHOD(SetVoiceRange);
+    RTTI_METHOD(GetVoiceRange);
+    RTTI_METHOD(HasVoiceMicrophone);
+    RTTI_METHOD(GetSpeakingEntities);
 });

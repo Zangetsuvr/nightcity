@@ -1,4 +1,4 @@
-add_requires("imgui", "xbyak", "minhook", "wil", "nameof", "semver")
+add_requires("imgui", "xbyak", "minhook", "wil", "nameof", "semver", "miniaudio", "libopus")
 
 target("Client")
     set_basename("CyberpunkMP")
@@ -54,7 +54,9 @@ target("Client")
         "nameof",
         "semver",
         "microsoft-gsl",
-        "flecs")
+        "flecs",
+        "miniaudio",
+        "libopus")
 
     on_install(function (target)
         os.cp(target:targetfile(), path.join(target:installdir("launcher"), "mod", "CyberpunkMP.dll"))

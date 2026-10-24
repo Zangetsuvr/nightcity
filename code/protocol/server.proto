@@ -84,6 +84,16 @@ message RpcDefinitions {
     repeated RpcDefinition server_definitions = 2;
 }
 
+// Someone near you is talking. id is their character's entity (as in
+// NotifyEntityMove); range as in client.VoiceData.
+message VoiceData {
+    bool unreliable = 1000;
+    uint64 id = 1;
+    bytes opus = 2;
+    uint32 range = 3;
+    uint32 sequence = 4;
+}
+
 message Protocol {
     oneof content {
         AuthenticationResponse authentication_response = 1;
@@ -98,5 +108,6 @@ message Protocol {
         NotifyVehicleEnter notify_vehicle_enter = 10;
         NotifyVehicleExit notify_vehicle_exit = 11;
         NotifyVehicleControlAssigned notify_vehicle_control_assigned = 12;
+        VoiceData voice_data = 13;
     }
 }

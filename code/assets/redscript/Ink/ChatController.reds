@@ -83,6 +83,11 @@ public class ChatController extends inkHUDGameController {
         let blackboardSystem: ref<BlackboardSystem> = GameInstance.GetBlackboardSystem(GetGameInstance());
         let uiBlackboard: ref<IBlackboard> = blackboardSystem.Get(GetAllBlackboardDefs().UIGameData);
         if show {
+            // Typing: never on air.
+            let voice = MpVoice.Get();
+            if IsDefined(voice) {
+                voice.Talk(false);
+            }
             let targets = new inkWidgetsSet();
             targets.Select(this.GetWidget(n"wrapper/input_box"));
             targets.Select(this.GetWidget(n"wrapper/input_box/size_provider"));

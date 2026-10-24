@@ -11,6 +11,7 @@
 
 #include "Systems/ChatSystem.h"
 #include "Systems/ServerListSystem.h"
+#include "Systems/VoiceSystem.h"
 
 World::World(const FlecsConfig& acFlecsConfig)
 {
@@ -20,6 +21,7 @@ World::World(const FlecsConfig& acFlecsConfig)
     emplace<PlayerManager>(this);
     emplace<ChatSystem>(this);
     emplace<ServerListSystem>(this);
+    emplace<VoiceSystem>(this);
 
     if (acFlecsConfig.IsEnabled())
     {

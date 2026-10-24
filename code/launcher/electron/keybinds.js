@@ -17,6 +17,8 @@ export const ACTIONS = [
   { id: 'chat', label: 'Open chat', mappings: ['UIEnterChatMessage_Button'], key: 'IK_Semicolon' },
   { id: 'job', label: 'Job board / dealership', mappings: ['UIJob_Button', 'UIShop_Button'], key: 'IK_Comma' },
   { id: 'emote', label: 'Emote wheel (hold)', mappings: ['UIEmote_Button'], key: 'IK_Period' },
+  { id: 'voice', label: 'Voice: push to talk (hold)', mappings: ['UIVoice_Button'], key: 'IK_N' },
+  { id: 'voiceRange', label: 'Voice: whisper / normal / shout', mappings: ['UIVoiceRange_Button'], key: 'IK_F11' },
   { id: 'connect', label: 'Connect / disconnect (hold)', mappings: ['UIConnectToServer_Button', 'UIDisconnectFromServer_Button'], key: 'IK_Slash' },
   { id: 'chatTop', label: 'Chat: scroll up', mappings: ['ChatTop_Button'], key: 'IK_PageUp' },
   { id: 'chatBottom', label: 'Chat: scroll down', mappings: ['ChatBottom_Button'], key: 'IK_PageDown' }

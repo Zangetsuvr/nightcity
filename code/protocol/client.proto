@@ -52,6 +52,15 @@ message RpcCall {
 	bytes arguments = 2;
 }
 
+// One 20 ms Opus frame of the player's voice (push-to-talk held).
+// range: 0 whisper, 1 normal, 2 shout.
+message VoiceData {
+    bool unreliable = 1000;
+    bytes opus = 1;
+    uint32 range = 2;
+    uint32 sequence = 3;
+}
+
 message Protocol {
     oneof content {
         AuthenticationRequest authentication_request = 1;
@@ -61,5 +70,6 @@ message Protocol {
         RpcCall rpc_call = 5;
         EnterVehicleRequest enter_vehicle_request = 6;
         ExitVehicleRequest exit_vehicle_request = 7;
+        VoiceData voice_data = 8;
     }
 }
