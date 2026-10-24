@@ -172,6 +172,13 @@ contextBridge.exposeInMainWorld('mpAPI', {
   logout: (address) => ipcRenderer.invoke('mp:logout', address),
   play: (address) => ipcRenderer.invoke('mp:play', address),
   isPlaying: () => ipcRenderer.invoke('mp:is-playing'),
+  updateState: () => ipcRenderer.invoke('update:get'),
+  installUpdate: () => ipcRenderer.invoke('update:install'),
+  onUpdate: (callback) => {
+    const listener = (_event, state) => callback(state)
+    ipcRenderer.on('update:state', listener)
+    return () => ipcRenderer.removeListener('update:state', listener)
+  },
   keybinds: () => ipcRenderer.invoke('mp:keybinds'),
   setKeybinds: (binds) => ipcRenderer.invoke('mp:set-keybinds', binds),
   onProgress: (callback) => {

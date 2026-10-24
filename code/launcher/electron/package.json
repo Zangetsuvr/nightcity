@@ -1,13 +1,14 @@
 {
   "name": "CyberpunkMP",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "",
   "main": "app.js",
   "type": "module",
   "scripts": {
     "test": "node test/modpack.test.mjs && node test/discord-login.test.mjs && node test/servers.test.mjs",
     "start:electron": "cross-env ELECTRON_DEV=1 ow-electron .",
-    "build:electron": "ow-electron-builder --publish=never"
+    "build:electron": "ow-electron-builder --publish=never",
+    "release:electron": "ow-electron-builder --publish=always"
   },
   "author": {
     "name": "Tilted Phoques SRL"
@@ -35,11 +36,20 @@
       "./server-launcher.js",
       "./servers.js",
       "./presence.js",
-      "./keybinds.js"
+      "./keybinds.js",
+      "./updater.js"
     ],
     "extraResources": [
       "./preload.mjs",
       "./launcher-config.json"
+    ],
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "Zangetsuvr",
+        "repo": "nightcity",
+        "releaseType": "release"
+      }
     ]
   },
   "private": true,
@@ -53,7 +63,8 @@
     "decompress": "^4.2.1",
     "electron-store": "^10.0.0",
     "readable-stream": "^4.5.2",
-    "@xhayper/discord-rpc": "^1.2.0"
+    "@xhayper/discord-rpc": "^1.2.0",
+    "electron-updater": "^6.3.9"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

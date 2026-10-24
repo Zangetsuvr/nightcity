@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import ServerBrowser from './components/ServerBrowser.tsx'
 import WindowFrame from './components/WindowFrame.tsx'
 import Skyline from './components/Skyline.tsx'
+import UpdateBar from './components/UpdateBar.tsx'
 import { theme } from './theme.ts'
 
 interface Notice { severity: 'error' | 'warning' | 'success', text: string }
@@ -61,6 +62,7 @@ export default function App () {
       <WindowFrame/>
 
       <Box component="main" sx={{ position: 'relative', zIndex: 1, height: '100vh', overflowY: 'auto', pt: '36px', display: 'flex', flexDirection: 'column' }}>
+        <UpdateBar/>
         <ServerBrowser gamePath={gamePath} onSelectGame={() => { void selectGame() }}/>
       </Box>
 

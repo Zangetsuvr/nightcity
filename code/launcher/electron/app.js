@@ -5,6 +5,7 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import electron from 'electron'
 import { registerServerLauncher } from './server-launcher.js'
+import { startAutoUpdate } from './updater.js'
 
 let win = null
 
@@ -134,4 +135,7 @@ electron.app.whenReady().then(async () => {
 
   // createMenu()
   createWindow()
+
+  // Launcher updates from GitHub releases (updater.js).
+  startAutoUpdate({ electron, getWindow: () => win, isPlaying: () => serverLauncher?.isPlaying() ?? false, isDev })
 })
