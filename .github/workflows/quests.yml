@@ -1,0 +1,74 @@
+name: Build quest archive
+
+# WolvenKit's command-line tools, run here so nobody has to on their PC:
+#  - every file in code/assets/Quests/original is converted to JSON (to read and edit),
+#  - every JSON in code/assets/Quests/edited is converted back and packed into
+#    zz_NightCityOnline_NoStory.archive.
+# Results go to the "quest-ci" branch.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['code/assets/Quests/**', '.github/workflows/quests.yml']
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Install WolvenKit CLI
+        run: dotnet tool install --global WolvenKit.CLI --version 9.0.1
+      - name: Convert and pack
+        run: |
+          set +e
+          export PATH="$PATH:$HOME/.dotnet/tools"
+          Q=code/assets/Quests
+          OUT=$RUNNER_TEMP/out
+          mkdir -p $OUT/json $OUT/archive
+          : > $OUT/log.txt
+          echo "=== tools" >> $OUT/log.txt
+          ls $HOME/.dotnet/tools >> $OUT/log.txt 2>&1
+          # Original game files -> JSON
+          if [ -d $Q/original ]; then
+            cp -r $Q/original $RUNNER_TEMP/orig
+            find $RUNNER_TEMP/orig -type f ! -name '*.json' | while read f; do
+              echo "=== serialize $f" >> $OUT/log.txt
+              cp77tools convert -s "$f" >> $OUT/log.txt 2>&1
+            done
+            (cd $RUNNER_TEMP/orig && find . -name '*.json' -exec cp --parents {} $OUT/json/ \;)
+          fi
+          # Edited JSON -> game files -> archive
+          if [ -d $Q/edited ]; then
+            cp -r $Q/edited $RUNNER_TEMP/edit
+            find $RUNNER_TEMP/edit -type f -name '*.json' | while read f; do
+              echo "=== deserialize $f" >> $OUT/log.txt
+              cp77tools convert -d "$f" >> $OUT/log.txt 2>&1
+              rm "$f"
+            done
+            mkdir -p $RUNNER_TEMP/pack/archive
+            cp -r $RUNNER_TEMP/edit/. $RUNNER_TEMP/pack/archive/
+            echo "=== files to pack" >> $OUT/log.txt
+            find $RUNNER_TEMP/pack -type f >> $OUT/log.txt
+            echo "=== pack" >> $OUT/log.txt
+            cp77tools pack -p $RUNNER_TEMP/pack/archive -o $OUT/archive >> $OUT/log.txt 2>&1
+            for a in $OUT/archive/*.archive; do [ -f "$a" ] && mv "$a" $OUT/archive/zz_NightCityOnline_NoStory.archive; done
+          fi
+          ls -laR $OUT >> $OUT/log.txt
+          exit 0
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cd $RUNNER_TEMP/out
+          echo "${GITHUB_SHA}" > COMMIT.txt
+          git init -q -b quest-ci
+          git config user.name ci && git config user.email ci@users.noreply.github.com
+          git add -A && git commit -q -m "quest ci ${GITHUB_SHA}"
+          git push -f "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}" HEAD:refs/heads/quest-ci
