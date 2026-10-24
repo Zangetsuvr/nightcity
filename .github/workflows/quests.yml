@@ -60,6 +60,14 @@ jobs:
             cp77tools pack -p $RUNNER_TEMP/pack/archive -o $OUT/archive >> $OUT/log.txt 2>&1
             for a in $OUT/archive/*.archive; do [ -f "$a" ] && mv "$a" $OUT/archive/zz_NightCityOnline_NoStory.archive; done
           fi
+          # Check: unpack the archive again and make sure the quest reads back with our change.
+          if [ -f $OUT/archive/zz_NightCityOnline_NoStory.archive ]; then
+            echo "=== verify" >> $OUT/log.txt
+            mkdir -p $RUNNER_TEMP/verify
+            cp77tools unbundle -p $OUT/archive/zz_NightCityOnline_NoStory.archive -o $RUNNER_TEMP/verify >> $OUT/log.txt 2>&1
+            find $RUNNER_TEMP/verify -type f ! -name '*.json' | while read f; do cp77tools convert serialize "$f" >> $OUT/log.txt 2>&1; done
+            echo "MP_OFF sockets after round trip: $(grep -rho 'MP_OFF_[A-Za-z0-9_ -]*' $RUNNER_TEMP/verify | wc -l)" >> $OUT/log.txt
+          fi
           ls -laR $OUT >> $OUT/log.txt
           exit 0
       - name: Publish
