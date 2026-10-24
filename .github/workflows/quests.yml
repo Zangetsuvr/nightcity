@@ -40,7 +40,7 @@ jobs:
             cp -r $Q/original $RUNNER_TEMP/orig
             find $RUNNER_TEMP/orig -type f ! -name '*.json' | while read f; do
               echo "=== serialize $f" >> $OUT/log.txt
-              cp77tools convert -s "$f" >> $OUT/log.txt 2>&1
+              cp77tools convert serialize "$f" >> $OUT/log.txt 2>&1
             done
             (cd $RUNNER_TEMP/orig && find . -name '*.json' -exec cp --parents {} $OUT/json/ \;)
           fi
@@ -49,7 +49,7 @@ jobs:
             cp -r $Q/edited $RUNNER_TEMP/edit
             find $RUNNER_TEMP/edit -type f -name '*.json' | while read f; do
               echo "=== deserialize $f" >> $OUT/log.txt
-              cp77tools convert -d "$f" >> $OUT/log.txt 2>&1
+              cp77tools convert deserialize "$f" >> $OUT/log.txt 2>&1
               rm "$f"
             done
             mkdir -p $RUNNER_TEMP/pack/archive
