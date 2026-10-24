@@ -1,0 +1,84 @@
+=== tools
+cp77tools
+nbgv
+=== serialize /home/runner/work/_temp/orig/base/open_world/phases/open_world_content.questphase
+[ 0: Information ] - Found 1 files to process.
+[ 0: Success     ] - Saved /home/runner/work/_temp/orig/base/open_world/phases/open_world_content.questphase to json.
+[ 0: Information ] - Elapsed time: 1158ms.
+=== serialize /home/runner/work/_temp/orig/base/quest/cyberpunk2077.questphase
+[ 0: Information ] - Found 1 files to process.
+[ 0: Success     ] - Saved /home/runner/work/_temp/orig/base/quest/cyberpunk2077.questphase to json.
+[ 0: Information ] - Elapsed time: 1134ms.
+=== deserialize /home/runner/work/_temp/edit/base/open_world/phases/open_world_content.questphase.json
+[ 0: Information ] - Found 1 files to process.
+[ 0: Warning     ] - Oodle couldn't be loaded. Using Kraken.dll instead could cause errors.
+[ 0: Success     ] - Imported open_world_content.questphase.json to /home/runner/work/_temp/edit/base/open_world/phases/open_world_content.questphase
+[ 0: Success     ] - Converted /home/runner/work/_temp/edit/base/open_world/phases/open_world_content.questphase.json to CR2W
+[ 0: Information ] - Elapsed time: 1203ms.
+=== deserialize /home/runner/work/_temp/edit/base/quest/cyberpunk2077.questphase.json
+[ 0: Information ] - Found 1 files to process.
+[ 0: Warning     ] - Oodle couldn't be loaded. Using Kraken.dll instead could cause errors.
+[ 0: Success     ] - Imported cyberpunk2077.questphase.json to /home/runner/work/_temp/edit/base/quest/cyberpunk2077.questphase
+[ 0: Success     ] - Converted /home/runner/work/_temp/edit/base/quest/cyberpunk2077.questphase.json to CR2W
+[ 0: Information ] - Elapsed time: 1062ms.
+=== files to pack
+/home/runner/work/_temp/pack/archive/base/open_world/phases/open_world_content.questphase
+/home/runner/work/_temp/pack/archive/base/quest/cyberpunk2077.questphase
+=== pack
+[ 0: Warning     ] - Oodle couldn't be loaded. Using Kraken.dll instead could cause errors.
+[ 0: Success     ] - Finished packing /home/runner/work/_temp/out/archive/archive.archive.
+=== verify
+[ 0: Information ] - /home/runner/work/_temp/out/archive/zz_NightCityOnline_NoStory.archive: Found 2/2 entries to extract.
+50%100%
+[ 0: Success     ] - /home/runner/work/_temp/out/archive/zz_NightCityOnline_NoStory.archive: Unbundled 2/2 entries.
+[ 0: Information ] - Found 1 files to process.
+[ 0: Success     ] - Saved /home/runner/work/_temp/verify/base/open_world/phases/open_world_content.questphase to json.
+[ 0: Information ] - Elapsed time: 1055ms.
+[ 0: Information ] - Found 1 files to process.
+[ 0: Success     ] - Saved /home/runner/work/_temp/verify/base/quest/cyberpunk2077.questphase to json.
+[ 0: Information ] - Elapsed time: 1214ms.
+MP_OFF sockets after round trip: 47
+/home/runner/work/_temp/out:
+total 20
+drwxr-xr-x 4 runner runner 4096 Oct 24 11:59 .
+drwxr-xr-x 9 runner runner 4096 Oct 24 12:00 ..
+drwxr-xr-x 2 runner runner 4096 Oct 24 12:00 archive
+drwxr-xr-x 3 runner runner 4096 Oct 24 12:00 json
+-rw-r--r-- 1 runner runner 2737 Oct 24 12:00 log.txt
+
+/home/runner/work/_temp/out/archive:
+total 36
+drwxr-xr-x 2 runner runner  4096 Oct 24 12:00 .
+drwxr-xr-x 4 runner runner  4096 Oct 24 11:59 ..
+-rw-r--r-- 1 runner runner 28672 Oct 24 12:00 zz_NightCityOnline_NoStory.archive
+
+/home/runner/work/_temp/out/json:
+total 12
+drwxr-xr-x 3 runner runner 4096 Oct 24 12:00 .
+drwxr-xr-x 4 runner runner 4096 Oct 24 11:59 ..
+drwxr-xr-x 4 runner runner 4096 Oct 24 12:00 base
+
+/home/runner/work/_temp/out/json/base:
+total 16
+drwxr-xr-x 4 runner runner 4096 Oct 24 12:00 .
+drwxr-xr-x 3 runner runner 4096 Oct 24 12:00 ..
+drwxr-xr-x 3 runner runner 4096 Oct 24 12:00 open_world
+drwxr-xr-x 2 runner runner 4096 Oct 24 12:00 quest
+
+/home/runner/work/_temp/out/json/base/open_world:
+total 12
+drwxr-xr-x 3 runner runner 4096 Oct 24 12:00 .
+drwxr-xr-x 4 runner runner 4096 Oct 24 12:00 ..
+drwxr-xr-x 2 runner runner 4096 Oct 24 12:00 phases
+
+/home/runner/work/_temp/out/json/base/open_world/phases:
+total 1560
+drwxr-xr-x 2 runner runner    4096 Oct 24 12:00 .
+drwxr-xr-x 3 runner runner    4096 Oct 24 12:00 ..
+-rw-r--r-- 1 runner runner 1588368 Oct 24 12:00 open_world_content.questphase.json
+
+/home/runner/work/_temp/out/json/base/quest:
+total 436
+drwxr-xr-x 2 runner runner   4096 Oct 24 12:00 .
+drwxr-xr-x 4 runner runner   4096 Oct 24 12:00 ..
+-rw-r--r-- 1 runner runner 436501 Oct 24 12:00 cyberpunk2077.questphase.json
