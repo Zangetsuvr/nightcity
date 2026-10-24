@@ -33,14 +33,6 @@
 		<button id="IK_Semicolon" />
     </mapping>
 
-	<mapping name="UIVoice_Button" type="Button" >
-		<button id="IK_N" />
-    </mapping>
-
-	<mapping name="UIVoiceRange_Button" type="Button" >
-		<button id="IK_F11" />
-    </mapping>
-
 	<mapping name="ChatTop_Button" type="Button" >
 		<button id="IK_PageUp" />
     </mapping>
@@ -104,16 +96,6 @@
 		<event name="BUTTON_RELEASED" />
 	</acceptedEvents>
 
-	<acceptedEvents action="UIVoice">
-		<event name="BUTTON_PRESSED" />
-		<event name="BUTTON_RELEASED" />
-	</acceptedEvents>
-
-	<acceptedEvents action="UIVoiceRange">
-		<event name="BUTTON_PRESSED" />
-		<event name="BUTTON_RELEASED" />
-	</acceptedEvents>
-
 	<acceptedEvents action="UIShop">
 		<event name="BUTTON_HOLD_COMPLETE" />
 		<event name="BUTTON_HOLD_PROGRESS" />
@@ -135,8 +117,6 @@
         <action name="UIEmote" map="UIEmote_Button" />
         <action name="UIShop" map="UIShop_Button" />
         <action name="UIJob" map="UIJob_Button" />
-        <action name="UIVoice" map="UIVoice_Button" />
-        <action name="UIVoiceRange" map="UIVoiceRange_Button" />
     </context>
 
 </bindings>

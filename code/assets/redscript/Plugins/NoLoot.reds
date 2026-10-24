@@ -130,3 +130,38 @@ protected cb func OnInteractionActivated(evt: ref<InteractionActivationEvent>) -
     }
     return wrappedMethod(evt);
 }
+
+// Ammo and other items dropped on the ground (an NPC's ammo when it dies, a
+// dropped weapon): walking over them picks them up automatically, before the
+// interaction check above can empty them. So they're emptied as they appear.
+@wrapMethod(gameItemDropObject)
+protected cb func OnGameAttached() -> Bool {
+    let result = wrappedMethod();
+    if MpNoLoot() {
+        let soon = new MpEmptyLootLater();
+        soon.target = this;
+        GameInstance.GetDelaySystem(this.GetGame()).DelayCallback(soon, 0.2, false);
+        // Contents are sometimes filled in a moment after it appears.
+        let later = new MpEmptyLootLater();
+        later.target = this;
+        GameInstance.GetDelaySystem(this.GetGame()).DelayCallback(later, 1.0, false);
+    }
+    return result;
+}
+
+// The game's "you're low, here's some ammo / a heal" drops from enemies.
+@wrapMethod(PlayerHandicapSystem)
+public const final func CanDropAmmo() -> Bool {
+    if MpNoLoot() {
+        return false;
+    }
+    return wrappedMethod();
+}
+
+@wrapMethod(PlayerHandicapSystem)
+public const final func CanDropHealingConsumable() -> Bool {
+    if MpNoLoot() {
+        return false;
+    }
+    return wrappedMethod();
+}
