@@ -191,6 +191,21 @@ public class ChatController extends inkHUDGameController {
             MpJobMessage("X " + FloatToStringPrec(p.X, 1) + "   Y " + FloatToStringPrec(p.Y, 1) + "   Z " + FloatToStringPrec(p.Z, 1));
             return;
         }
+        if Equals(textEntered, "/down") {
+            // Testing the downed state: go down exactly as if you'd flatlined
+            // (Trauma Team is called, the timer runs, F twice for the hospital).
+            let flatline = MpFlatline.Get();
+            if !IsDefined(flatline) || !GameInstance.GetNetworkWorldSystem().IsConnected() {
+                MpJobMessage("Only while connected to the server.");
+            } else {
+                if flatline.IsDown() {
+                    MpJobMessage("You're already down.");
+                } else {
+                    flatline.Down();
+                }
+            }
+            return;
+        }
         // Testing aids for the world's quest facts (which doors and shops are open):
         //   /fact <name>            shows its value
         //   /setfact <name> <value> sets it (on your own game only)
