@@ -1,0 +1,326 @@
+module CyberpunkMP.Ink
+
+// import Codeware.UI.*
+import CyberpunkMP.*
+import CyberpunkMP.World.*
+import CyberpunkMP.Plugins.*
+
+public class ChatController extends inkHUDGameController {
+    private let m_messagesRef: inkWidgetRef;
+    private let m_inputRef: inkTextInputRef;
+    private let m_scrollRef: inkScrollAreaRef;
+
+    private let m_uiSystem: wref<UISystem>;
+    private let m_player: wref<PlayerPuppet>;
+    private let m_repeatingScrollActionEnabled: Bool = false;
+    private let m_messageController: ref<ListController>;
+    private let m_chatInputOpen: Bool;
+    private let m_input: wref<inkTextInput>;
+    private let m_lastMessageData: ref<ChatMessageData>;
+    private let m_mpOpenDealerAfterChat: Bool;
+
+    protected cb func OnInitialize() -> Bool {
+        FTLog(s"[ChatController] OnInitialize");
+        this.m_player = this.GetPlayerControlledObject() as PlayerPuppet;
+        if !IsDefined(this.m_player) {
+            FTLog(s"[ChatController] NO PLAYER");
+        }
+        this.m_uiSystem = GameInstance.GetUISystem(this.m_player.GetGame());
+        this.m_messageController = inkWidgetRef.GetController(this.m_messagesRef) as ListController;
+        this.m_input = inkWidgetRef.Get(this.m_inputRef) as inkTextInput;
+        this.m_player.RegisterInputListener(this, n"UIEnterChatMessage");
+        // get last messages & populate list
+
+        this.UpdateInputHints();
+
+        let messageData = new ChatMessageUIEvent();
+        messageData.author = "SERVER";
+        messageData.message = "Connected to...";
+        this.QueueEvent(messageData);
+    }
+
+    protected cb func OnUninitialize() -> Bool {
+        FTLog(s"[ChatController] OnUninitialize");
+        this.m_player.UnregisterInputListener(this, n"UIEnterChatMessage");
+    }
+
+    private func UpdateInputHints() -> Void {
+        let evt = new UpdateInputHintMultipleEvent();
+        evt.targetHintContainer = n"GameplayInputHelper";
+        evt.AddInputHint(CreateInputHint(n"Chat", n"UIEnterChatMessage", false), !this.m_chatInputOpen);
+        evt.AddInputHint(CreateInputHint(n"Cancel", n"back", false), this.m_chatInputOpen);
+        evt.AddInputHint(CreateInputHint(n"Send", n"EnterChat", false), this.m_chatInputOpen);
+        evt.AddInputHint(CreateInputHint(n"Scroll up", n"navigate_up", false), this.m_chatInputOpen);
+        evt.AddInputHint(CreateInputHint(n"Scroll down", n"navigate_down", false), this.m_chatInputOpen);
+        evt.AddInputHint(CreateInputHint(n"Top of chat", n"ChatTop", false), this.m_chatInputOpen);
+        evt.AddInputHint(CreateInputHint(n"End of chat", n"ChatBottom", false), this.m_chatInputOpen);
+        this.m_uiSystem.QueueEvent(evt);
+    }
+
+    protected cb func OnChatMessageUIEvent(evt: ref<ChatMessageUIEvent>) -> Bool {
+        FTLog(s"[ChatController] OnChatMessageUIEvent");
+        let messageData = new ChatMessageData();
+        messageData.m_author = evt.author;
+        messageData.m_message = evt.message;
+        messageData.m_isSelf = Equals(StringToName(evt.author), StringToName(GameInstance.GetNetworkWorldSystem().GetChatSystem().GetUsername()));
+        if IsDefined(this.m_lastMessageData) {
+            messageData.m_needsAuthorLabel = NotEquals(StringToName(this.m_lastMessageData.m_author), StringToName(messageData.m_author));
+        } else {
+            messageData.m_needsAuthorLabel = true;
+        }
+        this.m_lastMessageData = messageData;
+        inkScrollAreaRef.ScrollVertical(this.m_scrollRef, 0.0);
+        this.m_messageController.PushData(messageData, true);
+
+        let targets = new inkWidgetsSet();
+        targets.Select(this.m_messageController.GetItemAt(this.m_messageController.Size() - 1));
+        this.PlayLibraryAnimationOnTargets(n"new_message", targets);
+
+        inkScrollAreaRef.ScrollVertical(this.m_scrollRef, 1.0);
+    }
+
+    private func ShowChatInput(show: Bool) -> Void {
+        let blackboardSystem: ref<BlackboardSystem> = GameInstance.GetBlackboardSystem(GetGameInstance());
+        let uiBlackboard: ref<IBlackboard> = blackboardSystem.Get(GetAllBlackboardDefs().UIGameData);
+        if show {
+            // Typing: never on air.
+            let voice = MpVoice.Get();
+            if IsDefined(voice) {
+                voice.Talk(false);
+            }
+            let targets = new inkWidgetsSet();
+            targets.Select(this.GetWidget(n"wrapper/input_box"));
+            targets.Select(this.GetWidget(n"wrapper/input_box/size_provider"));
+            targets.Select(this.GetWidget(n"wrapper/chat/mask"));
+            targets.Select(this.GetWidget(n"wrapper/chat/bg"));
+            this.PlayLibraryAnimationOnTargets(n"to_input", targets);
+
+            this.RequestSetFocus(inkTextInputRef.Get(this.m_inputRef));
+            uiBlackboard.SetBool(GetAllBlackboardDefs().UIGameData.UIChatInputContextRequest, true, true);
+            this.m_player.RegisterInputListener(this, n"OpenPauseMenu");
+            this.m_player.RegisterInputListener(this, n"back");
+            this.m_player.RegisterInputListener(this, n"navigate_up");
+            this.m_player.RegisterInputListener(this, n"navigate_down");
+            this.m_player.RegisterInputListener(this, n"ChatTop");
+            this.m_player.RegisterInputListener(this, n"ChatBottom");
+            this.m_player.RegisterInputListener(this, n"EnterChat");
+        } else {
+            this.m_repeatingScrollActionEnabled = false;
+            let targets = new inkWidgetsSet();
+            targets.Select(this.GetWidget(n"wrapper/input_box"));
+            targets.Select(this.GetWidget(n"wrapper/input_box/size_provider"));
+            targets.Select(this.GetWidget(n"wrapper/chat/mask"));
+            targets.Select(this.GetWidget(n"wrapper/chat/bg"));
+            this.PlayLibraryAnimationOnTargets(n"from_input", targets);
+
+            uiBlackboard.SetBool(GetAllBlackboardDefs().UIGameData.UIChatInputContextRequest, false, true);
+            this.m_player.UnregisterInputListener(this, n"OpenPauseMenu");
+            this.m_player.UnregisterInputListener(this, n"back");
+            this.m_player.UnregisterInputListener(this, n"navigate_up");
+            this.m_player.UnregisterInputListener(this, n"navigate_down");
+            this.m_player.UnregisterInputListener(this, n"ChatTop");
+            this.m_player.UnregisterInputListener(this, n"ChatBottom");
+            this.m_player.UnregisterInputListener(this, n"EnterChat");
+            this.m_input.SetText("");
+            this.RequestSetFocus(null);
+        }
+        this.m_chatInputOpen = show;
+        this.UpdateInputHints();
+    }
+
+    // Opened from the phone to write a text: the box comes up with "@Name: ".
+    protected cb func OnMpOpenChat(evt: ref<MpOpenChatEvent>) -> Bool {
+        if !this.m_chatInputOpen {
+            this.ShowChatInput(true);
+        }
+        this.m_input.SetText(evt.text);
+        this.m_input.MoveCaret(StrLen(evt.text));
+    }
+
+    private final func SendChat() -> Void {
+        let textEntered: String = this.m_input.GetText();
+        // Texts: "@Name: message" (from the phone) and "/r message" (reply to
+        // the last text you got).
+        if StrBeginsWith(textEntered, "@") && StrContains(textEntered, ":") {
+            let to = StrBeforeFirst(StrAfterFirst(textEntered, "@"), ":");
+            let body = StrAfterFirst(textEntered, ":");
+            PhoneServer.SendText(to, body);
+            return;
+        }
+        if StrBeginsWith(textEntered, "/r ") {
+            let phone = MpPhone.Get();
+            let to = IsDefined(phone) ? phone.GetLastSender() : "";
+            if StrLen(to) == 0 {
+                MpJobMessage("Nobody has texted you yet.");
+            } else {
+                PhoneServer.SendText(to, StrAfterFirst(textEntered, " "));
+            }
+            return;
+        }
+        if Equals(textEntered, "/phone") {
+            let phone = MpPhone.Get();
+            if IsDefined(phone) {
+                phone.RequestOpen();
+            }
+            return;
+        }
+        if Equals(textEntered, "/admin") {
+            AdminServer.OpenPanel();
+            return;
+        }
+        if StrBeginsWith(textEntered, "/addplace ") {
+            let place = StrAfterFirst(textEntered, " ");
+            let here = GetPlayer(GetGameInstance()).GetWorldPosition();
+            AdminServer.AddPlace(place, here.X, here.Y, here.Z);
+            return;
+        }
+        if Equals(textEntered, "/dealer") {
+            // At the dealership: open it. Anywhere else: say where it is and why not.
+            let dealer = MpDealership.Get();
+            let controller = GameInstance.GetNetworkWorldSystem().GetAppearanceSystem().m_controller;
+            if IsDefined(dealer) && dealer.IsNear(GetPlayer(GetGameInstance())) && ArraySize(dealer.m_cars) > 0 && IsDefined(controller) {
+                this.m_mpOpenDealerAfterChat = true;
+            } else {
+                MpJobMessage(IsDefined(dealer) ? dealer.Describe() : "Dealership: not loaded.");
+            }
+            return;
+        }
+        if Equals(textEntered, "/where") {
+            // Your position, for setting places in the server's config (dealership...).
+            let p = GetPlayer(GetGameInstance()).GetWorldPosition();
+            MpJobMessage("X " + FloatToStringPrec(p.X, 1) + "   Y " + FloatToStringPrec(p.Y, 1) + "   Z " + FloatToStringPrec(p.Z, 1));
+            return;
+        }
+        if Equals(textEntered, "/down") {
+            // Testing the downed state: go down exactly as if you'd flatlined
+            // (Trauma Team is called, the timer runs, F twice for the hospital).
+            let flatline = MpFlatline.Get();
+            if !IsDefined(flatline) || !GameInstance.GetNetworkWorldSystem().IsConnected() {
+                MpJobMessage("Only while connected to the server.");
+            } else {
+                if flatline.IsDown() {
+                    MpJobMessage("You're already down.");
+                } else {
+                    flatline.Down();
+                }
+            }
+            return;
+        }
+        // Testing aids for the world's quest facts (which doors and shops are open):
+        //   /fact <name>            shows its value
+        //   /setfact <name> <value> sets it (on your own game only)
+        let words = StrSplit(textEntered, " ");
+        if ArraySize(words) == 2 && Equals(words[0], "/fact") {
+            let value = GameInstance.GetQuestsSystem(GetGameInstance()).GetFact(StringToName(words[1]));
+            MpJobMessage(words[1] + " = " + IntToString(value));
+            return;
+        }
+        if ArraySize(words) == 3 && Equals(words[0], "/setfact") {
+            GameInstance.GetQuestsSystem(GetGameInstance()).SetFact(StringToName(words[1]), StringToInt(words[2]));
+            MpJobMessage(words[1] + " set to " + words[2]);
+            return;
+        }
+        if NotEquals(textEntered, "") {
+            FTLog(s"[ChatController] SendChat \"\(textEntered)\"");
+
+            GameInstance.GetNetworkWorldSystem().GetChatSystem().Send(textEntered);
+        };
+    }
+
+    private func Scroll(up: Bool) {
+        let contentSize = inkScrollAreaRef.GetContentSize(this.m_scrollRef);
+        // let viewportSize = this.m_scrollArea.GetViewportSize();
+        let delta = 100.0 / contentSize.Y;
+        // if contentSize.Y > viewportSize.Y {
+        //     delta = contentSize.Y;
+        // }
+        let current = inkScrollAreaRef.GetVerticalScrollPosition(this.m_scrollRef);
+        if up {
+            inkScrollAreaRef.ScrollVertical(this.m_scrollRef, current - delta);
+        } else {
+            inkScrollAreaRef.ScrollVertical(this.m_scrollRef, current + delta);
+        }
+    }
+
+    protected cb func OnChatInputAction(action: ListenerAction, consumer: ListenerActionConsumer) -> Bool {
+        let actionName: CName = ListenerAction.GetName(action);
+        let actionType: gameinputActionType = ListenerAction.GetType(action);
+        if Equals(actionType, gameinputActionType.REPEAT) {
+            if !this.m_repeatingScrollActionEnabled {
+                return false;
+            };
+            switch actionName {
+            case n"navigate_up":
+                this.Scroll(true);
+                return true;
+                break;
+            case n"navigate_down":
+                this.Scroll(false);
+                return true;
+                break;
+            };
+        } else if Equals(actionType, gameinputActionType.BUTTON_PRESSED) {
+            if !this.m_repeatingScrollActionEnabled {
+                this.m_repeatingScrollActionEnabled = true;
+            };
+            switch actionName {
+            case n"EnterChat":
+                this.SendChat();
+                this.ShowChatInput(false);
+                if this.m_mpOpenDealerAfterChat {
+                    this.m_mpOpenDealerAfterChat = false;
+                    let controller = GameInstance.GetNetworkWorldSystem().GetAppearanceSystem().m_controller;
+                    if IsDefined(controller) {
+                        controller.OpenJobBoardFromChat();
+                    }
+                }
+                return true;
+                break;
+            case n"OpenPauseMenu":
+                ListenerActionConsumer.DontSendReleaseEvent(consumer);
+                return true;
+                break;
+            case n"navigate_up":
+                this.Scroll(true);
+                return true;
+                break;
+            case n"navigate_down":
+                this.Scroll(false);
+                return true;
+                break;
+            case n"ChatTop":
+                inkScrollAreaRef.ScrollVertical(this.m_scrollRef, 0.0);
+                return true;
+                break;
+            case n"ChatBottom":
+                inkScrollAreaRef.ScrollVertical(this.m_scrollRef, 1.0);
+                return true;
+                break;
+            case n"back":
+                this.ShowChatInput(false);
+                return true;
+                break;
+            };
+        };
+        return false;
+    }
+
+    protected cb func OnAction(action: ListenerAction, consumer: ListenerActionConsumer) -> Bool {
+        let actionName: CName = ListenerAction.GetName(action);
+        let actionType: gameinputActionType = ListenerAction.GetType(action);
+
+        if !this.m_chatInputOpen {
+            if Equals(actionName, n"UIEnterChatMessage") && Equals(actionType, gameinputActionType.BUTTON_RELEASED) {
+                // let targets = new inkWidgetsSet();
+                // targets.Select(this.m_phoneIconWidget);
+                // this.PlayLibraryAnimationOnTargets(n"onUse", targets);
+                this.ShowChatInput(true);
+                return true;
+            } else {
+                return false;
+            }
+        } else {
+            return this.OnChatInputAction(action, consumer);
+        }
+    }
+}
